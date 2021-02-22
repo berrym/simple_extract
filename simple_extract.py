@@ -133,7 +133,7 @@ def should_fetch_url(url, fp):
         print(f"Remote archive {url} is the same size as local file {fp}. Skipping...")
         return False
     else:
-        print(f"Remote and local archives differ in size, downloading...")
+        print(f"Remote {url} and local {fp} archives differ in size, downloading...")
 
     return True
 

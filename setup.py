@@ -4,7 +4,7 @@ setup(
     name="simple_extract",
     version="0.1.0",
     packages=[""],
-    url="https://github.com/berrym/simple-extract.git",
+    url="https://github.com/berrym/simple_extract.git",
     license="MIT",
     author="Michael Berry",
     author_email="trismegustis@gmail.com",
