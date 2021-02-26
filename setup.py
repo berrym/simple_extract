@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="simple_extract",
-    version="0.1.0",
+    version="0.1.1",
     packages=[""],
     url="https://github.com/berrym/simple_extract.git",
     license="MIT",
