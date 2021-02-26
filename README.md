@@ -32,13 +32,15 @@ External tools that can be used:
 
     * clone the git repository from https://github.com/berrym/simple_extract.git
     or:
+    * pip install simple-extract
+    or:
     * pip install --user simple-extract
 
 ### Executing program
 
     * python simple_extract.py some-archive.tar.gz some-other-archive.lzma
     or if installed via pip:
-    * simple-extract some-archize.bz2 some-other-archive.tgz
+    * simple-extract some-archize.bz2
 
 ## Authors
 
@@ -49,6 +51,8 @@ Michael Berry <trismegustis@gmail.com>
 
 * 0.1.0
     * Initial Release
+* 0.1.1
+    * Change the way paths are handled if stdout is used
 
 ## License
 
