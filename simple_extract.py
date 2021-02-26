@@ -98,7 +98,10 @@ def simple_extract(archive, archive_cmd):
 
     # Split archive name separating extensions
     path = Path(archive)
-    target, _ = os.path.split(path.stem)
+    if not uses_stdout:
+        target, _ = os.path.split(path.stem)
+    else:
+        target = path.stem
 
     # Extract archive
     with open(archive) as fin:
