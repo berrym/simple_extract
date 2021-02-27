@@ -32,9 +32,9 @@ External tools that can be used:
 
     * clone the git repository from https://github.com/berrym/simple_extract.git
     or:
-    * pip install simple-extract
+    * python -m pip install simple-extract
     or:
-    * pip install --user simple-extract
+    * python -m pip install --user simple-extract
 
 ### Executing program
 
