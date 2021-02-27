@@ -53,6 +53,8 @@ Michael Berry <trismegustis@gmail.com>
     * Initial Release
 * 0.1.1
     * Change the way paths are handled if stdout is used
+* 0.1.2
+    * Fixed setup.py issue preventing proper builds
 
 ## License
 

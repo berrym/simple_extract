@@ -5,8 +5,8 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 setuptools.setup(
     name="simple_extract",
-    version="0.1.2",
-    packages=setuptools.find_packages(),
+    version="0.1.3",
+    packages=[""],
     python_requires=">=3.6",
     url="https://github.com/berrym/simple_extract.git",
     author="Michael Berry",
