@@ -31,6 +31,7 @@ from urllib.request import Request
 from urllib.request import urlopen
 from urllib.parse import urlsplit
 
+import argparse
 import errno
 import glob
 import os
@@ -83,7 +84,7 @@ def glob_multiple_extensions(extensions):
     return files_globbed
 
 
-def simple_extract(archive, archive_cmd):
+def simple_extract(archive, archive_cmd, noclobber=False):
     """Extract an archive using external tools."""
 
     uses_stdin = archive_cmd.uses_stdin
@@ -102,6 +103,10 @@ def simple_extract(archive, archive_cmd):
         target, _ = os.path.split(path.stem)
     else:
         target = path.stem
+
+    if os.path.exists(target) and noclobber:
+        print(f"Target: {target} already exists not overwriting...")
+        return
 
     # Extract archive
     with open(archive) as fin:
@@ -183,8 +188,18 @@ def extract_urls(args):
 def main():
     """Main function."""
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--noclobber",
+        action="store_true",
+        help="Don't overwrite existing files",
+        dest="noclobber",
+    )
+    parser.add_argument("ARCHIVES", nargs="*")
+    parsed = parser.parse_args()
+
     working_dir = os.getcwd()
-    args = sys.argv[1:]
+    args = [x for x in parsed.ARCHIVES]
     files_globbed = []
     commands = []
 
@@ -282,6 +297,7 @@ def main():
         print(f"Files to extract: {files_globbed}")
     else:
         print("Nothing to do.")
+        print("Try passing --help as an argument for more information.")
         sys.exit(0)
 
     os.chdir(working_dir)
@@ -292,7 +308,7 @@ def main():
             print(f"Error: {root_cmd} does not exist...not extracting {archive}.")
             continue
         print(f"Extracting file {archive}")
-        simple_extract(archive, archive_cmd)
+        simple_extract(archive, archive_cmd, noclobber=parsed.noclobber)
 
 
 if __name__ == "__main__":
