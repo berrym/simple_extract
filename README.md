@@ -57,6 +57,8 @@ Michael Berry <trismegustis@gmail.com>
     * Updated setup.py
 * 0.1.3
     * Fixed setup.py issue preventing proper builds
+* 0.1.4
+    * Added a simple noclobber option for non piped commands
 
 ## License
 
