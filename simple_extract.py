@@ -26,7 +26,6 @@ SOFTWARE.
 """
 
 
-from pathlib import Path
 from urllib.request import Request
 from urllib.request import urlopen
 from urllib.parse import urlsplit
@@ -35,6 +34,7 @@ import argparse
 import errno
 import glob
 import os
+import pathlib
 import shlex
 import subprocess
 import sys
@@ -98,11 +98,11 @@ def simple_extract(archive, archive_cmd, noclobber=False):
     pipe_cmd = shlex.split(archive_cmd.pipe_cmd)
 
     # Split archive name separating extensions
-    path = Path(archive)
-    if not uses_stdout:
-        target, _ = os.path.split(path.stem)
-    else:
-        target = path.stem
+    target_path = pathlib.PurePath(archive)
+    for suffix in target_path.suffixes:
+        target, _ = os.path.split(target_path)
+
+    print(f"Target: {target}")
 
     if os.path.exists(target) and noclobber:
         print(f"Target: {target} already exists not overwriting...")
@@ -146,17 +146,26 @@ def should_fetch_url(url, fp):
     return True
 
 
-def fetch_archive(url):
+def fetch_archive(url, silent_download=False):
     """Download an archive for extraction."""
 
     _, target = os.path.split(url)
 
     if command_exists("curl"):
-        fetch_cmd = shlex.split("curl -L -s -o -" + " " + url)
+        if silent_download:
+            fetch_cmd = shlex.split("curl -L -s -o -" + " " + url)
+        else:
+            fetch_cmd = shlex.split("curl -L -o -" + " " + url)
     elif command_exists("wget"):
-        fetch_cmd = shlex.split("wget -q -O -" + " " + url)
+        if silent_download:
+            fetch_cmd = shlex.split("wget -q -O -" + " " + url)
+        else:
+            fetch_cmd = shlex.split("wget -O -" + " " + url)
     elif command_exists("fetch"):
-        fetch_cmd = shlex.split("fetch -q -o -" + " " + url)
+        if silent_download:
+            fetch_cmd = shlex.split("fetch -q -o -" + " " + url)
+        else:
+            fetch_cmd = shlex.split("fetch -o -" + " " + url)
     else:
         print("Error: no suitable download program found.")
         return False
@@ -188,12 +197,21 @@ def extract_urls(args):
 def main():
     """Main function."""
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="A small command line utility to extract compressed archives.",
+        epilog="Copyright (c) 2021 Michael Berry",
+    )
     parser.add_argument(
         "--noclobber",
         action="store_true",
         help="Don't overwrite existing files",
         dest="noclobber",
+    )
+    parser.add_argument(
+        "--silent_download",
+        action="store_true",
+        help="Don't show archive download progress",
+        dest="silent_download",
     )
     parser.add_argument("ARCHIVES", nargs="*")
     parsed = parser.parse_args()
@@ -210,7 +228,7 @@ def main():
 
     url_archives = extract_urls(args)
     for url in url_archives:
-        target = fetch_archive(url)
+        target = fetch_archive(url, silent_download=parsed.silent_download)
         if not target:
             continue
         archives.append(target)
