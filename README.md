@@ -59,6 +59,8 @@ Michael Berry <trismegustis@gmail.com>
     * Fixed setup.py issue preventing proper builds
 * 0.1.4
     * Added a simple noclobber option for non piped commands
+* 0.1.5
+    * Added a command line switch to silence archive downloads
 
 ## License
 
