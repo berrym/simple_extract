@@ -2,7 +2,7 @@
 
 """simple-extract.py
 
-A small script to simplify the extraction of compressed archives.
+A small command line utility to download and extract compressed archives.
 
 Copyright (c) 2021 Michael Berry
 
@@ -99,7 +99,8 @@ def simple_extract(archive, archive_cmd, noclobber=False):
 
     # Split archive name separating extensions
     target_path = pathlib.PurePath(archive)
-    for suffix in target_path.suffixes:
+    target = target_path
+    for _ in target_path.suffixes:
         target, _ = os.path.split(target_path)
 
     print(f"Target: {target}")
