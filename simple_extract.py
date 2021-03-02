@@ -98,10 +98,13 @@ def simple_extract(archive, archive_cmd, noclobber=False):
     pipe_cmd = shlex.split(archive_cmd.pipe_cmd)
 
     # Split archive name separating extensions
+    stop_on_extension = (".txt", ".md", ".rtf", ".rst", ".odt", ".docx")
     target_path = pathlib.PurePath(archive)
-    target = target_path
-    for _ in target_path.suffixes:
-        target, _ = os.path.split(target_path)
+    target = ""
+    for suffix in target_path.suffixes:
+        target, _ = os.path.splitext(target_path)
+        if suffix in stop_on_extension:
+            break
 
     print(f"Target: {target}")
 
