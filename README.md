@@ -40,7 +40,7 @@ External tools that can be used:
 
     * python simple_extract.py some-archive.tar.gz some-other-archive.lzma
     or if installed via pip:
-    * simple-extract some-archize.bz2
+    * simple-extract https://github.com/ibara/mg/releases/download/mg-6.8.1/mg-6.8.1.tar.gz
 
 ## Authors
 
@@ -61,10 +61,12 @@ Michael Berry <trismegustis@gmail.com>
     * Added a simple noclobber option for non piped commands
 * 0.1.5
     * Added a command line switch to silence archive downloads
+* 0.1.6
+    * Stop splitting text at common extensions
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file  for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
