@@ -310,8 +310,14 @@ def main():
     """
 
     parser = argparse.ArgumentParser(
+        prog="simple-extract",
         description="A small command line utility to extract compressed archives.",
         epilog="Copyright (c) 2021 Michael Berry",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version="%(prog)s 0.1.6",
     )
     parser.add_argument(
         "--noclobber",
