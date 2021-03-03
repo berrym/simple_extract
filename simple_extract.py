@@ -44,7 +44,13 @@ class ArchiveCommand:
     """Object for storing information needed to extract archives."""
 
     def __init__(self, decomp_cmd="", pipe_cmd="", uses_stdin=False, uses_stdout=False):
-        """Set attributes for decompression and piping."""
+        """Set attributes for decompression and piping.
+        @param decomp_cmd: command string to decompress archive
+        @param pipe_cmd: command string to pipe
+        @param uses_stdin: boolean value if decomp_cmd uses stdin
+        @param uses_stdout: boolean value decomp_cmd uses stdout
+        @return: None
+        """
 
         self.decomp_cmd = decomp_cmd
         self.pipe_cmd = pipe_cmd
@@ -52,7 +58,9 @@ class ArchiveCommand:
         self.uses_stdout = uses_stdout
 
     def __repr__(self):
-        """Representation of the object."""
+        """Representation of the object.
+        @return: string representing ArchiveCommand
+        """
 
         msg = f"[ decomp_cmd = {self.decomp_cmd!r} "
         msg += f"pipe_cmd = {self.pipe_cmd!r} "
@@ -62,7 +70,10 @@ class ArchiveCommand:
 
 
 def command_exists(cmd):
-    """Test for an external command's existence."""
+    """Test for an external command's existence.
+    @param cmd: external command to check for existence
+    @return: boolean value True if cmd exists, False otherwise
+    """
 
     try:
         subprocess.Popen([cmd], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -74,7 +85,10 @@ def command_exists(cmd):
 
 
 def glob_multiple_extensions(extensions):
-    """Iterate over a sequence of extensions to glob."""
+    """Iterate over a sequence of extensions to glob.
+    @param extensions: a sequence of extensions to iterate over
+    @return: a list of positive matches globbed
+    """
 
     files_globbed = []
 
@@ -85,7 +99,12 @@ def glob_multiple_extensions(extensions):
 
 
 def simple_extract(archive, archive_cmd, noclobber=False):
-    """Extract an archive using external tools."""
+    """Extract an archive using external tools.
+    @param archive: the archive to be extracted
+    @param archive_cmd: a completed ArchiveCommand object
+    @param noclobber: boolean option not to overwrite existing files (doesn't work with pipes)
+    @return: None
+    """
 
     uses_stdin = archive_cmd.uses_stdin
     uses_stdout = archive_cmd.uses_stdout
@@ -98,7 +117,19 @@ def simple_extract(archive, archive_cmd, noclobber=False):
     pipe_cmd = shlex.split(archive_cmd.pipe_cmd)
 
     # Split archive name separating extensions
-    stop_on_extension = (".txt", ".md", ".rtf", ".rst", ".odt", ".docx", ".iso", ".img")
+    stop_on_extension = (
+        ".txt",
+        ".md",
+        ".rtf",
+        ".rst",
+        ".odt",
+        ".docx",
+        ".iso",
+        ".img",
+        ".jpeg",
+        ".xml",
+        ".html",
+    )
     target_path = pathlib.PurePath(archive)
     target = ""
     for suffix in target_path.suffixes:
@@ -132,7 +163,11 @@ def simple_extract(archive, archive_cmd, noclobber=False):
 
 
 def should_fetch_url(url, fp):
-    """Check if an archive should be fetched by comparing remote and local file sizes."""
+    """Check if an archive should be fetched by comparing remote and local file sizes.
+    @param url: url of archive to be downloaded
+    @param fp: possible local archive that may already have been downloaded
+    @return: boolean True if archive should downloaded, False otherwise
+    """
 
     req = Request(url, method="HEAD")
     with urlopen(req) as f:
@@ -151,7 +186,11 @@ def should_fetch_url(url, fp):
 
 
 def fetch_archive(url, silent_download=False):
-    """Download an archive for extraction."""
+    """Download an archive for extraction.
+    @param url: url of archive to be downloaded
+    @param silent_download: boolean switch to quiet download output
+    @return: boolean False if failure, target archive if successful
+    """
 
     _, target = os.path.split(url)
 
@@ -189,7 +228,10 @@ def fetch_archive(url, silent_download=False):
 
 
 def extract_urls(args):
-    """Extract urls from a sequence."""
+    """Extract urls from a sequence.
+    @param args: list of possible valid urls to download
+    @return: list of valid urls to download
+    """
 
     possibles = [urlsplit(x) for x in args]
     unfiltered = [x if x.scheme and x.netloc and x.path else None for x in possibles]
@@ -199,7 +241,9 @@ def extract_urls(args):
 
 
 def main():
-    """Main function."""
+    """Main function.
+    @rtype: None
+    """
 
     parser = argparse.ArgumentParser(
         description="A small command line utility to extract compressed archives.",
