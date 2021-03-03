@@ -160,7 +160,7 @@ def simple_extract(archive, archive_cmd, noclobber=False):
         ".psd",
         ".svg",
         ".tif",
-        ".tiff"
+        ".tiff",
         ".csv",
         ".dat",
         ".db",
