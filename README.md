@@ -63,6 +63,8 @@ Michael Berry <trismegustis@gmail.com>
     * Added a command line switch to silence archive downloads
 * 0.1.6
     * Stop splitting text at common extensions
+* 0.1.7
+    * Split archive paths only at valid extensions
 
 ## License
 
