@@ -8,7 +8,7 @@ A small command line file extraction utility written in Python. It uses external
 
 ## Getting started
 
-Python 3.6+ needed. Tested with 3.9
+Python 3.9+ needed
 
 External tools that can be used:
 
