@@ -125,74 +125,39 @@ def simple_extract(archive, archive_cmd, noclobber=False):
 
     pipe_cmd = shlex.split(archive_cmd.pipe_cmd)
 
-    # Split archive name separating extensions
-    stop_on_extension = (
-        ".apk",
-        ".bat",
-        ".bin",
-        ".cgi",
-        ".pl",
-        ".com",
-        ".exe",
-        ".gadget",
+    # Valid extension suffixes
+    valid_suffixes = (
+        ".tar.bz2",
+        ".tbz2",
+        ".tbz",
+        ".tar.gz",
+        ".tgz",
+        ".tar.xz",
+        ".txz",
+        ".tar.lzma",
+        ".tar.zst",
+        ".tar",
+        ".rar",
+        ".lzh",
+        ".7z",
+        ".zip",
         ".jar",
-        ".msi",
-        ".py",
-        ".wsf",
-        ".txt",
-        ".md",
-        ".rtf",
-        ".rst",
-        ".odt",
-        ".docx",
-        ".fnt",
-        ".fon",
-        ".otf",
-        ".ttf",
-        ".ai",
-        ".bmp",
-        ".gif",
-        ".ico",
-        ".jpeg",
-        ".jpg",
-        ".png",
-        ".ps",
-        ".psd",
-        ".svg",
-        ".tif",
-        ".tiff",
-        ".csv",
-        ".dat",
-        ".db",
-        ".dbf",
-        ".log",
-        ".mdb",
-        ".sav",
-        ".sql",
-        ".xml",
-        ".html",
-        ".aif",
-        ".cda",
-        ".mid",
-        ".midi",
-        ".mp3",
-        ".mpa",
-        ".ogg",
-        ".wav",
-        ".wma",
-        ".wpl",
-        ".bin",
-        ".dmg",
-        ".toast",
-        ".vcd",
-        ".img",
+        ".rpm",
+        ".deb",
+        ".bz2",
+        ".gz",
+        ".Z",
+        ".xz",
+        ".lzma",
+        ".zst",
     )
+
+    # Remove extensions from extraction target
     target_path = pathlib.PurePath(archive)
-    target = ""
+    target = target_path.stem
     for suffix in target_path.suffixes:
-        target, _ = os.path.splitext(target_path)
-        if suffix in stop_on_extension:
-            break
+        if suffix in valid_suffixes:
+            target = target.removesuffix(suffix)
 
     print(f"Target: {target}")
 
