@@ -26,10 +26,6 @@ SOFTWARE.
 """
 
 
-from urllib.request import Request
-from urllib.request import urlopen
-from urllib.parse import urlsplit
-
 import argparse
 import errno
 import glob
@@ -38,6 +34,8 @@ import pathlib
 import shlex
 import subprocess
 import sys
+import urllib.parse
+import urllib.request
 
 
 class ArchiveCommand:
@@ -184,27 +182,39 @@ def simple_extract(archive, archive_cmd, noclobber=False):
                 subprocess.run(pipe_cmd, stdin=cmd.stdout, check=True)
 
 
-def should_fetch_url(url, fp):
+def should_fetch_url(archive_url, local_archive):
     """Check if an archive should be fetched by comparing remote and local file sizes.
 
-    :param url: url of archive to be downloaded
-    :param fp: possible local archive that may already have been downloaded
+    :param archive_url: url of archive to be downloaded
+    :param local_archive: possible local archive that may already have been downloaded
 
     :returns: boolean True if archive should downloaded, False otherwise
     """
 
-    req = Request(url, method="HEAD")
-    with urlopen(req) as f:
+    # return False if local archive does not exist
+    if not os.path.exists(local_archive):
+        return True
+
+    # get content-size of remote archive
+    req = urllib.request.Request(archive_url, method="HEAD")
+    with urllib.request.urlopen(req) as f:
         remote_size = f.headers["content-length"]
-        local_size = os.path.getsize(fp)
+
+    # get size of local archive
+    local_size = os.path.getsize(local_archive)
 
     print(f"remote size: {remote_size}, local size: {local_size}")
 
+    # compare remote and local sizes, if equal return False
     if int(remote_size) == int(local_size):
-        print(f"Remote archive {url} is the same size as local file {fp}. Skipping...")
+        print(
+            f"Remote archive {archive_url} is the same size as local file {local_archive}. Skipping..."
+        )
         return False
     else:
-        print(f"Remote {url} and local {fp} archives differ in size, downloading...")
+        print(
+            f"Remote {archive_url} and local {local_archive} archives differ in size, downloading..."
+        )
 
     return True
 
@@ -240,9 +250,8 @@ def fetch_archive(url, silent_download=False):
         return False
 
     # Check if an archive should be downloaded
-    if os.path.exists(target):
-        if not should_fetch_url(url, target):
-            return False
+    if not should_fetch_url(url, target):
+        return False
 
     print(f"Fetching archive {target}")
 
@@ -261,7 +270,7 @@ def extract_urls(args):
     :returns: list of valid urls to download
     """
 
-    possibles = [urlsplit(x) for x in args]
+    possibles = [urllib.parse.urlsplit(x) for x in args]
     unfiltered = [x if x.scheme and x.netloc and x.path else None for x in possibles]
     processed_urls = list(filter(lambda x: x is not None, unfiltered))
 
@@ -270,6 +279,7 @@ def extract_urls(args):
 
 def main():
     """Main function.
+    This is where setup.py defines it's entry-point to create the simple-extract installable.
 
     :returns: None
     """
@@ -282,7 +292,7 @@ def main():
     parser.add_argument(
         "--version",
         action="version",
-        version="%(prog)s 0.1.7",
+        version="%(prog)s 0.1.8",
     )
     parser.add_argument(
         "--noclobber",
@@ -309,6 +319,7 @@ def main():
     unfiltered = [x if os.path.exists(x) else None for x in possibles]
     archives = list(filter(lambda x: x is not None, unfiltered))
 
+    # append url archives
     url_archives = extract_urls(args)
     for url in url_archives:
         target = fetch_archive(url, silent_download=parsed.silent_download)
@@ -318,6 +329,7 @@ def main():
 
     print(f"archives: {archives}")
 
+    # create an ArchiveCommand for each archive, pass them to simple_extract
     for archive in archives:
         print(f"Examining archive: {archive}")
 
@@ -403,6 +415,7 @@ def main():
 
     os.chdir(working_dir)
 
+    # pass archives and their ArchiveCommand's to simple_extract
     for archive, archive_cmd in zip(files_globbed, commands):
         root_cmd = archive_cmd.decomp_cmd.split()[0]
         if not command_exists(root_cmd):
@@ -412,5 +425,6 @@ def main():
         simple_extract(archive, archive_cmd, noclobber=parsed.noclobber)
 
 
+# Program entry point if ran as a normal script, e.g. python simple_extract.py
 if __name__ == "__main__":
     main()
