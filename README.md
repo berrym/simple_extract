@@ -65,6 +65,8 @@ Michael Berry <trismegustis@gmail.com>
     * Stop splitting text at common extensions
 * 0.1.7
     * Split archive paths only at valid extensions
+* 0.1.8
+    * Changed imports, check for local archive existence in should_fetch archive
 
 ## License
 
