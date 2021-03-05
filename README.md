@@ -4,7 +4,7 @@ Simple File Extraction
 
 ## Description
 
-A small command line file extraction utility written in Python. It uses external tools to optionally fetch from a url and decompress archives.
+A small command line file extraction utility written in Python. It uses external tools to optionally fetch from an url and decompress archives.
 
 ## Getting started
 
@@ -67,6 +67,8 @@ Michael Berry <trismegustis@gmail.com>
     * Split archive paths only at valid extensions
 * 0.1.8
     * Changed imports, check for local archive existence in should_fetch archive
+* 0.1.9
+    * Improved url validation and error handling
 
 ## License
 
