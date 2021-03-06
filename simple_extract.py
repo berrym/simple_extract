@@ -264,7 +264,7 @@ def fetch_archive(url, silent_download=False):
 
     # Check if an archive should be downloaded
     if not should_fetch_url(url, target):
-        return False
+        return target
 
     print(f"Fetching archive {target}")
 
