@@ -69,6 +69,8 @@ Michael Berry <trismegustis@gmail.com>
     * Changed imports, check for local archive existence in should_fetch archive
 * 0.1.9
     * Improved url validation and error handling
+* 0.2.0
+    * Use subprocess.run instead of Popen and check for errors
 
 ## License
 
