@@ -173,6 +173,7 @@ def simple_extract(archive, archive_cmd, noclobber=False):
                         subprocess.run(decomp_cmd, stdin=fin, stdout=fout, check=True)
                     except subprocess.CalledProcessError as e:
                         print(f"Error: Return Code = {e.returncode} {e.output or ''}")
+                        os.remove(target)
             else:
                 try:
                     subprocess.run(decomp_cmd, check=True)
@@ -354,73 +355,73 @@ def main():
         for archive in archives:
             print(f"Examining archive: {archive}")
 
-            pn, fn = os.path.split(archive)
-            if pn and archive not in url_archives:
-                os.chdir(pn)
+            pathname, filename = os.path.split(archive)
+            if pathname and archive not in url_archives:
+                os.chdir(pathname)
 
-            if fn in glob_multiple_extensions(("*tar.bz2", "*tbz2", "*tbz")):
+            if filename in glob_multiple_extensions(("*tar.bz2", "*tbz2", "*tbz")):
                 files_globbed.append(archive)
                 cmd = ArchiveCommand(decomp_cmd="tar -xvjf -", uses_stdin=True)
                 commands.append(cmd)
-            elif fn in glob_multiple_extensions(("*tar.gz", "*tgz")):
+            elif filename in glob_multiple_extensions(("*tar.gz", "*tgz")):
                 files_globbed.append(archive)
                 cmd = ArchiveCommand(decomp_cmd="tar -xvzf -", uses_stdin=True)
                 commands.append(cmd)
-            elif fn in glob_multiple_extensions(("*tar.xz", "*txz", "*tar.lzma")):
+            elif filename in glob_multiple_extensions(("*tar.xz", "*txz", "*tar.lzma")):
                 files_globbed.append(archive)
                 cmd = ArchiveCommand(decomp_cmd="tar -xvJf -", uses_stdin=True)
                 commands.append(cmd)
-            elif fn in glob.glob("*tar.zst"):
+            elif filename in glob.glob("*tar.zst"):
                 files_globbed.append(archive)
                 cmd = ArchiveCommand(decomp_cmd="tar --zstd -xvf -", uses_stdin=True)
                 commands.append(cmd)
-            elif fn in glob.glob("*tar"):
+            elif filename in glob.glob("*tar"):
                 files_globbed.append(archive)
                 cmd = ArchiveCommand(decomp_cmd="tar -xvf -", uses_stdin=True)
                 commands.append(cmd)
-            elif fn in glob.glob("*rar"):
+            elif filename in glob.glob("*rar"):
                 files_globbed.append(archive)
                 cmd = ArchiveCommand(decomp_cmd="unrar x")
                 commands.append(cmd)
-            elif fn in glob.glob("*lzh"):
+            elif filename in glob.glob("*lzh"):
                 files_globbed.append(archive)
                 cmd = ArchiveCommand(decomp_cmd="lha x")
                 commands.append(cmd)
-            elif fn in glob.glob("*7z"):
+            elif filename in glob.glob("*7z"):
                 files_globbed.append(archive)
                 cmd = ArchiveCommand(decomp_cmd="7z x")
                 commands.append(cmd)
-            elif fn in glob_multiple_extensions(("*zip", "*jar")):
+            elif filename in glob_multiple_extensions(("*zip", "*jar")):
                 files_globbed.append(archive)
                 cmd = ArchiveCommand(decomp_cmd="unzip")
                 commands.append(cmd)
-            elif fn in glob.glob("*rpm"):
+            elif filename in glob.glob("*rpm"):
                 files_globbed.append(archive)
                 cmd = ArchiveCommand(decomp_cmd="rpm2cpio -", pipe_cmd="cpio -idvm")
                 commands.append(cmd)
-            elif fn in glob.glob("*deb"):
+            elif filename in glob.glob("*deb"):
                 files_globbed.append(archive)
                 cmd = ArchiveCommand(decomp_cmd="ar -x")
                 commands.append(cmd)
-            elif fn in glob.glob("*bz2"):
+            elif filename in glob.glob("*bz2"):
                 files_globbed.append(archive)
                 cmd = ArchiveCommand(
                     decomp_cmd="bzip2 -d -c -", uses_stdin=True, uses_stdout=True
                 )
                 commands.append(cmd)
-            elif fn in glob_multiple_extensions(("*gz", "*Z")):
+            elif filename in glob_multiple_extensions(("*gz", "*Z")):
                 files_globbed.append(archive)
                 cmd = ArchiveCommand(
                     decomp_cmd="gzip -d -c -", uses_stdin=True, uses_stdout=True
                 )
                 commands.append(cmd)
-            elif fn in glob_multiple_extensions(("*xz", "*lzma")):
+            elif filename in glob_multiple_extensions(("*xz", "*lzma")):
                 files_globbed.append(archive)
                 cmd = ArchiveCommand(
                     decomp_cmd="xz -d -c -", uses_stdin=True, uses_stdout=True
                 )
                 commands.append(cmd)
-            elif fn in glob.glob("*zst"):
+            elif filename in glob.glob("*zst"):
                 files_globbed.append(archive)
                 cmd = ArchiveCommand(
                     decomp_cmd="zstd -d -c -", uses_stdin=True, uses_stdout=True
