@@ -109,7 +109,7 @@ def simple_extract(archive, archive_cmd, noclobber=False):
 
     @param archive: the archive to be extracted
     @param archive_cmd: a completed ArchiveCommand object
-    @param noclobber: boolean option not to overwrite existing files (doesn't work with pipes)
+    @param noclobber: boolean option not to overwrite existing files
 
     @returns: None
     """
@@ -126,15 +126,10 @@ def simple_extract(archive, archive_cmd, noclobber=False):
 
     # Valid extension suffixes
     valid_suffixes = (
-        ".tar.bz2",
         ".tbz2",
         ".tbz",
-        ".tar.gz",
         ".tgz",
-        ".tar.xz",
         ".txz",
-        ".tar.lzma",
-        ".tar.zst",
         ".tar",
         ".rar",
         ".lzh",
@@ -168,19 +163,27 @@ def simple_extract(archive, archive_cmd, noclobber=False):
     with open(archive) as fin:
         if not pipe_cmd:
             if uses_stdin and not uses_stdout:
-                # use a context manager so each subprocess is waited on
-                with subprocess.Popen(decomp_cmd, stdin=fin) as sproc:
-                    sproc.communicate()
+                try:
+                    subprocess.run(decomp_cmd, stdin=fin, check=True)
+                except subprocess.CalledProcessError as e:
+                    print(f"Error: Return Code = {e.returncode} {e.output or ''}")
             elif uses_stdin and uses_stdout:
                 with open(target, "w+") as fout:
-                    with subprocess.Popen(decomp_cmd, stdin=fin, stdout=fout) as sproc:
-                        sproc.communicate()
+                    try:
+                        subprocess.run(decomp_cmd, stdin=fin, stdout=fout, check=True)
+                    except subprocess.CalledProcessError as e:
+                        print(f"Error: Return Code = {e.returncode} {e.output or ''}")
             else:
-                with subprocess.Popen(decomp_cmd) as _:
-                    pass
+                try:
+                    subprocess.run(decomp_cmd, check=True)
+                except subprocess.CalledProcessError as e:
+                    print(f"Error: Return Code = {e.returncode} {e.output or ''}")
         else:
             with subprocess.Popen(decomp_cmd, stdin=fin, stdout=subprocess.PIPE) as cmd:
-                subprocess.run(pipe_cmd, stdin=cmd.stdout, check=True)
+                try:
+                    subprocess.run(pipe_cmd, stdin=cmd.stdout, check=True)
+                except subprocess.CalledProcessError as e:
+                    print(f"Error: Return Code = {e.returncode} {e.output or ''}")
 
 
 def should_fetch_url(archive_url, local_archive):
@@ -200,7 +203,7 @@ def should_fetch_url(archive_url, local_archive):
         with urllib.request.urlopen(req) as f:
             remote_size = f.headers["content-length"]
     except urllib.error.HTTPError as e:
-        print("Error: The server couldn't fullfil the request")
+        print("Error: The server couldn't fulfil the request")
         print(f"Error Code: {e.code}")
         return False
     except urllib.error.URLError as e:
@@ -270,12 +273,9 @@ def fetch_archive(url, silent_download=False):
 
     with open(target, "w+") as fout:
         try:
-            with subprocess.Popen(
-                fetch_cmd, stdin=subprocess.PIPE, stdout=fout
-            ) as sproc:
-                sproc.communicate()
+            subprocess.run(fetch_cmd, stdin=subprocess.PIPE, stdout=fout, check=True)
         except subprocess.CalledProcessError as e:
-            print(f"Error: {e.returncode} {e.output}")
+            print(f"Error: Return Code = {e.returncode} {e.output or ''}")
             os.remove(target)
             return False
 
@@ -312,7 +312,7 @@ def main():
     parser.add_argument(
         "--version",
         action="version",
-        version="%(prog)s 0.1.9",
+        version="%(prog)s 0.2.0",
     )
     parser.add_argument(
         "--noclobber",
