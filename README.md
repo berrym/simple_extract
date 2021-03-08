@@ -73,8 +73,10 @@ Michael Berry <trismegustis@gmail.com>
     * Use subprocess.run instead of Popen and check for errors
 * 0.2.1
     * Use a dictionary command mapping instead of if else control flow
+* 0.2.2
+    * Removed glob_multiple_extensions, deprecated
 
-## License
+s## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
