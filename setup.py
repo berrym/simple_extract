@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 setuptools.setup(
     name="simple_extract",
-    version="0.2.0",
+    version="0.2.1s",
     packages=[""],
     python_requires=">=3.9",
     url="https://github.com/berrym/simple_extract.git",
@@ -24,4 +24,4 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-)
+)MDMD
