@@ -90,22 +90,6 @@ def command_exists(cmd):
     return True
 
 
-def glob_multiple_extensions(extensions):
-    """Iterate over a sequence of extensions to glob.
-
-    @param extensions: a sequence of extensions to iterate over
-
-    @returns: a list of positive glob matches
-    """
-
-    glob_files = []
-
-    for ext in extensions:
-        glob_files.extend(glob.glob(ext))
-
-    return glob_files
-
-
 def simple_extract(archive, archive_cmd, no_clobber=False):
     """Extract an archive using external tools.
 
