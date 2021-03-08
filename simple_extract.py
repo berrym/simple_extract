@@ -42,18 +42,20 @@ import urllib.request
 class ArchiveCommand:
     """Object for storing information needed to extract archives."""
 
-    def __init__(self, decomp_cmd="", pipe_cmd="", uses_stdin=False, uses_stdout=False):
+    def __init__(
+        self, extract_cmd="", pipe_cmd="", uses_stdin=False, uses_stdout=False
+    ):
         """Set attributes for decompression and piping.
 
-        @param decomp_cmd: command string to decompress archive
+        @param extract_cmd: command string to decompress archive
         @param pipe_cmd: command string to pipe
-        @param uses_stdin: boolean value if decomp_cmd uses stdin
-        @param uses_stdout: boolean value decomp_cmd uses stdout
+        @param uses_stdin: boolean value if extract_cmd uses stdin
+        @param uses_stdout: boolean value extract_cmd uses stdout
 
         @returns: None
         """
 
-        self.decomp_cmd = decomp_cmd
+        self.extract_cmd = extract_cmd
         self.pipe_cmd = pipe_cmd
         self.uses_stdin = uses_stdin
         self.uses_stdout = uses_stdout
@@ -64,7 +66,7 @@ class ArchiveCommand:
         @returns: string representing ArchiveCommand
         """
 
-        msg = f"[ decomp_cmd = {self.decomp_cmd!r} "
+        msg = f"[ extract_cmd = {self.extract_cmd!r} "
         msg += f"pipe_cmd = {self.pipe_cmd!r} "
         msg += f"uses_stdin = {self.uses_stdin!r} "
         msg += f"uses_stdout = {self.uses_stdout!r} ] "
@@ -93,23 +95,23 @@ def glob_multiple_extensions(extensions):
 
     @param extensions: a sequence of extensions to iterate over
 
-    @returns: a list of positive matches globbed
+    @returns: a list of positive glob matches
     """
 
-    files_globbed = []
+    glob_files = []
 
     for ext in extensions:
-        files_globbed.extend(glob.glob(ext))
+        glob_files.extend(glob.glob(ext))
 
-    return files_globbed
+    return glob_files
 
 
-def simple_extract(archive, archive_cmd, noclobber=False):
+def simple_extract(archive, archive_cmd, no_clobber=False):
     """Extract an archive using external tools.
 
     @param archive: the archive to be extracted
     @param archive_cmd: a completed ArchiveCommand object
-    @param noclobber: boolean option not to overwrite existing files
+    @param no_clobber: boolean option not to overwrite existing files
 
     @returns: None
     """
@@ -118,9 +120,9 @@ def simple_extract(archive, archive_cmd, noclobber=False):
     uses_stdout = archive_cmd.uses_stdout
 
     if uses_stdin or uses_stdout:
-        decomp_cmd = shlex.split(archive_cmd.decomp_cmd)
+        extract_cmd = shlex.split(archive_cmd.extract_cmd)
     else:
-        decomp_cmd = shlex.split(archive_cmd.decomp_cmd + " " + archive)
+        extract_cmd = shlex.split(archive_cmd.extract_cmd + " " + archive)
 
     pipe_cmd = shlex.split(archive_cmd.pipe_cmd)
 
@@ -155,7 +157,7 @@ def simple_extract(archive, archive_cmd, noclobber=False):
 
     print(f"Target: {target}")
 
-    if os.path.exists(target) and noclobber:
+    if os.path.exists(target) and no_clobber:
         print(f"Target: {target} already exists not overwriting...")
         return
 
@@ -164,23 +166,27 @@ def simple_extract(archive, archive_cmd, noclobber=False):
         if not pipe_cmd:
             if uses_stdin and not uses_stdout:
                 try:
-                    subprocess.run(decomp_cmd, stdin=fin, check=True)
+                    subprocess.run(extract_cmd, stdin=fin, check=True)
                 except subprocess.CalledProcessError as e:
                     print(f"Error: Return Code = {e.returncode} {e.output or ''}")
             elif uses_stdin and uses_stdout:
-                with open(target, "w+") as fout:
+                with open(target, "w+") as outfile:
                     try:
-                        subprocess.run(decomp_cmd, stdin=fin, stdout=fout, check=True)
+                        subprocess.run(
+                            extract_cmd, stdin=fin, stdout=outfile, check=True
+                        )
                     except subprocess.CalledProcessError as e:
                         print(f"Error: Return Code = {e.returncode} {e.output or ''}")
                         os.remove(target)
             else:
                 try:
-                    subprocess.run(decomp_cmd, check=True)
+                    subprocess.run(extract_cmd, check=True)
                 except subprocess.CalledProcessError as e:
                     print(f"Error: Return Code = {e.returncode} {e.output or ''}")
         else:
-            with subprocess.Popen(decomp_cmd, stdin=fin, stdout=subprocess.PIPE) as cmd:
+            with subprocess.Popen(
+                extract_cmd, stdin=fin, stdout=subprocess.PIPE
+            ) as cmd:
                 try:
                     subprocess.run(pipe_cmd, stdin=cmd.stdout, check=True)
                 except subprocess.CalledProcessError as e:
@@ -272,9 +278,9 @@ def fetch_archive(url, silent_download=False):
 
     print(f"Fetching archive {target}")
 
-    with open(target, "w+") as fout:
+    with open(target, "w+") as outfile:
         try:
-            subprocess.run(fetch_cmd, stdin=subprocess.PIPE, stdout=fout, check=True)
+            subprocess.run(fetch_cmd, stdin=subprocess.PIPE, stdout=outfile, check=True)
         except subprocess.CalledProcessError as e:
             print(f"Error: Return Code = {e.returncode} {e.output or ''}")
             os.remove(target)
@@ -313,13 +319,13 @@ def main():
     parser.add_argument(
         "--version",
         action="version",
-        version="%(prog)s 0.2.0",
+        version="%(prog)s 0.2.1",
     )
     parser.add_argument(
-        "--noclobber",
+        "--no_clobber",
         action="store_true",
         help="Don't overwrite existing files",
-        dest="noclobber",
+        dest="no_clobber",
     )
     parser.add_argument(
         "--silent_download",
@@ -332,8 +338,45 @@ def main():
 
     working_dir = os.getcwd()
     args = [x for x in parsed.ARCHIVES]
-    files_globbed = []
+    glob_files = []
     commands = []
+    command_map = {
+        "*.tar.bz2": ArchiveCommand(extract_cmd="tar -xvjf -", uses_stdin=True),
+        "*.tbz2": ArchiveCommand(extract_cmd="tar -xvjf -", uses_stdin=True),
+        "*.tbz": ArchiveCommand(extract_cmd="tar -xvjf -", uses_stdin=True),
+        "*.tar.gz": ArchiveCommand(extract_cmd="tar -xvzf -", uses_stdin=True),
+        "*.tgz": ArchiveCommand(extract_cmd="tar -xvzf -", uses_stdin=True),
+        "*.tar.xz": ArchiveCommand(extract_cmd="tar -xvJf -", uses_stdin=True),
+        "*.txz": ArchiveCommand(extract_cmd="tar -xvJf -", uses_stdin=True),
+        "*.tar.lzma": ArchiveCommand(extract_cmd="tar -xvJf -", uses_stdin=True),
+        "*.tar.zst": ArchiveCommand(extract_cmd="tar --zstd -xvf -", uses_stdin=True),
+        "*.tar": ArchiveCommand(extract_cmd="tar -xvf -", uses_stdin=True),
+        "*.rar": ArchiveCommand(extract_cmd="unrar x"),
+        "*.lzh": ArchiveCommand(extract_cmd="lha x"),
+        "*.7z": ArchiveCommand(extract_cmd="7z x"),
+        "*.zip": ArchiveCommand(extract_cmd="unzip"),
+        "*.jar": ArchiveCommand(extract_cmd="unzip"),
+        "*.rpm": ArchiveCommand(extract_cmd="rpm2cpio -", pipe_cmd="cpio -idvm"),
+        "*.deb": ArchiveCommand(extract_cmd="ar -x"),
+        "*.bz2": ArchiveCommand(
+            extract_cmd="bzip2 -d -c -", uses_stdin=True, uses_stdout=True
+        ),
+        "*.gz": ArchiveCommand(
+            extract_cmd="gzip -d -c -", uses_stdin=True, uses_stdout=True
+        ),
+        "*.Z": ArchiveCommand(
+            extract_cmd="gzip -d -c -", uses_stdin=True, uses_stdout=True
+        ),
+        "*.xz": ArchiveCommand(
+            extract_cmd="xz -d -c -", uses_stdin=True, uses_stdout=True
+        ),
+        "*.lzma": ArchiveCommand(
+            extract_cmd="xz -d -c -", uses_stdin=True, uses_stdout=True
+        ),
+        "*.zst": ArchiveCommand(
+            extract_cmd="zstd -d -c -", uses_stdin=True, uses_stdout=True
+        ),
+    }
 
     # sanitize inputs
     possibles = [os.path.realpath(x) for x in args]
@@ -359,77 +402,14 @@ def main():
             if pathname and archive not in url_archives:
                 os.chdir(pathname)
 
-            if filename in glob_multiple_extensions(("*tar.bz2", "*tbz2", "*tbz")):
-                files_globbed.append(archive)
-                cmd = ArchiveCommand(decomp_cmd="tar -xvjf -", uses_stdin=True)
-                commands.append(cmd)
-            elif filename in glob_multiple_extensions(("*tar.gz", "*tgz")):
-                files_globbed.append(archive)
-                cmd = ArchiveCommand(decomp_cmd="tar -xvzf -", uses_stdin=True)
-                commands.append(cmd)
-            elif filename in glob_multiple_extensions(("*tar.xz", "*txz", "*tar.lzma")):
-                files_globbed.append(archive)
-                cmd = ArchiveCommand(decomp_cmd="tar -xvJf -", uses_stdin=True)
-                commands.append(cmd)
-            elif filename in glob.glob("*tar.zst"):
-                files_globbed.append(archive)
-                cmd = ArchiveCommand(decomp_cmd="tar --zstd -xvf -", uses_stdin=True)
-                commands.append(cmd)
-            elif filename in glob.glob("*tar"):
-                files_globbed.append(archive)
-                cmd = ArchiveCommand(decomp_cmd="tar -xvf -", uses_stdin=True)
-                commands.append(cmd)
-            elif filename in glob.glob("*rar"):
-                files_globbed.append(archive)
-                cmd = ArchiveCommand(decomp_cmd="unrar x")
-                commands.append(cmd)
-            elif filename in glob.glob("*lzh"):
-                files_globbed.append(archive)
-                cmd = ArchiveCommand(decomp_cmd="lha x")
-                commands.append(cmd)
-            elif filename in glob.glob("*7z"):
-                files_globbed.append(archive)
-                cmd = ArchiveCommand(decomp_cmd="7z x")
-                commands.append(cmd)
-            elif filename in glob_multiple_extensions(("*zip", "*jar")):
-                files_globbed.append(archive)
-                cmd = ArchiveCommand(decomp_cmd="unzip")
-                commands.append(cmd)
-            elif filename in glob.glob("*rpm"):
-                files_globbed.append(archive)
-                cmd = ArchiveCommand(decomp_cmd="rpm2cpio -", pipe_cmd="cpio -idvm")
-                commands.append(cmd)
-            elif filename in glob.glob("*deb"):
-                files_globbed.append(archive)
-                cmd = ArchiveCommand(decomp_cmd="ar -x")
-                commands.append(cmd)
-            elif filename in glob.glob("*bz2"):
-                files_globbed.append(archive)
-                cmd = ArchiveCommand(
-                    decomp_cmd="bzip2 -d -c -", uses_stdin=True, uses_stdout=True
-                )
-                commands.append(cmd)
-            elif filename in glob_multiple_extensions(("*gz", "*Z")):
-                files_globbed.append(archive)
-                cmd = ArchiveCommand(
-                    decomp_cmd="gzip -d -c -", uses_stdin=True, uses_stdout=True
-                )
-                commands.append(cmd)
-            elif filename in glob_multiple_extensions(("*xz", "*lzma")):
-                files_globbed.append(archive)
-                cmd = ArchiveCommand(
-                    decomp_cmd="xz -d -c -", uses_stdin=True, uses_stdout=True
-                )
-                commands.append(cmd)
-            elif filename in glob.glob("*zst"):
-                files_globbed.append(archive)
-                cmd = ArchiveCommand(
-                    decomp_cmd="zstd -d -c -", uses_stdin=True, uses_stdout=True
-                )
-                commands.append(cmd)
+            for extension, command in command_map.items():
+                if filename in glob.glob(extension):
+                    if archive not in glob_files:
+                        glob_files.append(archive)
+                        commands.append(command_map[extension])
 
-        if files_globbed:
-            print(f"Files to extract: {files_globbed}")
+        if glob_files:
+            print(f"Files to extract: {glob_files}")
     else:
         print("Nothing to do.")
         print("Try passing --help as an argument for more information.")
@@ -438,13 +418,13 @@ def main():
     os.chdir(working_dir)
 
     # pass archives and their ArchiveCommand's to simple_extract
-    for archive, archive_cmd in zip(files_globbed, commands):
-        root_cmd = archive_cmd.decomp_cmd.split()[0]
+    for archive, archive_cmd in zip(glob_files, commands):
+        root_cmd = archive_cmd.extract_cmd.split()[0]
         if not command_exists(root_cmd):
             print(f"Error: {root_cmd} does not exist...not extracting {archive}.")
             continue
         print(f"Extracting file {archive}")
-        simple_extract(archive, archive_cmd, noclobber=parsed.noclobber)
+        simple_extract(archive, archive_cmd, no_clobber=parsed.no_clobber)
 
 
 # Program entry point if ran as a normal script, e.g. python simple_extract.py
