@@ -71,6 +71,8 @@ Michael Berry <trismegustis@gmail.com>
     * Improved url validation and error handling
 * 0.2.0
     * Use subprocess.run instead of Popen and check for errors
+* 0.2.1
+    * Use a dictionary command mapping instead of if else control flow
 
 ## License
 
