@@ -90,22 +90,6 @@ def command_exists(cmd):
     return True
 
 
-def glob_multiple_extensions(extensions):
-    """Iterate over a sequence of extensions to glob.
-
-    @param extensions: a sequence of extensions to iterate over
-
-    @returns: a list of positive glob matches
-    """
-
-    glob_files = []
-
-    for ext in extensions:
-        glob_files.extend(glob.glob(ext))
-
-    return glob_files
-
-
 def simple_extract(archive, archive_cmd, no_clobber=False):
     """Extract an archive using external tools.
 
@@ -162,18 +146,18 @@ def simple_extract(archive, archive_cmd, no_clobber=False):
         return
 
     # Extract archive
-    with open(archive) as fin:
+    with open(archive) as infile:
         if not pipe_cmd:
             if uses_stdin and not uses_stdout:
                 try:
-                    subprocess.run(extract_cmd, stdin=fin, check=True)
+                    subprocess.run(extract_cmd, stdin=infile, check=True)
                 except subprocess.CalledProcessError as e:
                     print(f"Error: Return Code = {e.returncode} {e.output or ''}")
             elif uses_stdin and uses_stdout:
                 with open(target, "w+") as outfile:
                     try:
                         subprocess.run(
-                            extract_cmd, stdin=fin, stdout=outfile, check=True
+                            extract_cmd, stdin=infile, stdout=outfile, check=True
                         )
                     except subprocess.CalledProcessError as e:
                         print(f"Error: Return Code = {e.returncode} {e.output or ''}")
@@ -185,7 +169,7 @@ def simple_extract(archive, archive_cmd, no_clobber=False):
                     print(f"Error: Return Code = {e.returncode} {e.output or ''}")
         else:
             with subprocess.Popen(
-                extract_cmd, stdin=fin, stdout=subprocess.PIPE
+                extract_cmd, stdin=infile, stdout=subprocess.PIPE
             ) as cmd:
                 try:
                     subprocess.run(pipe_cmd, stdin=cmd.stdout, check=True)
@@ -253,6 +237,7 @@ def fetch_archive(url, silent_download=False):
 
     _, target = os.path.split(url)
 
+    # determine which download tool to use
     if command_exists("curl"):
         if silent_download:
             fetch_cmd = shlex.split("curl -L -s -o -" + " " + url)
