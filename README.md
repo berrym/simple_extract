@@ -74,7 +74,9 @@ Michael Berry <trismegustis@gmail.com>
 * 0.2.1
     * Use a dictionary command mapping instead of if else control flow
 * 0.2.2
-    * Refactored main, removed glob_multiple_extensions, deprecated
+    * Removed glob_multiple_extensions, deprecated
+* 0.2.3
+    * Refactored main()
 
 ## License
 
