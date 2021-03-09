@@ -319,7 +319,7 @@ def main():
     parser.add_argument(
         "--version",
         action="version",
-        version="%(prog)s 0.2.1",
+        version="%(prog)s 0.2.2",
     )
     parser.add_argument(
         "--no_clobber",
@@ -378,7 +378,7 @@ def main():
         ),
     }
 
-    # sanitize inputs
+    # sanitize inputs, silently drop bad paths
     possibles = [os.path.realpath(x) for x in args]
     unfiltered = [x if os.path.exists(x) else None for x in possibles]
     archives = list(filter(lambda x: x is not None, unfiltered))
@@ -391,29 +391,28 @@ def main():
             continue
         archives.append(target)
 
-    if len(archives):
-        print(f"archives: {archives}")
-
-        # create an ArchiveCommand for each archive, pass them to simple_extract
-        for archive in archives:
-            print(f"Examining archive: {archive}")
-
-            pathname, filename = os.path.split(archive)
-            if pathname and archive not in url_archives:
-                os.chdir(pathname)
-
-            for extension, command in command_map.items():
-                if filename in glob.glob(extension):
-                    if archive not in glob_files:
-                        glob_files.append(archive)
-                        commands.append(command_map[extension])
-
-        if glob_files:
-            print(f"Files to extract: {glob_files}")
-    else:
+    if not archives:
         print("Nothing to do.")
         print("Try passing --help as an argument for more information.")
         sys.exit(0)
+
+    print(f"archives: {archives}")
+
+    # store an archive and an ArchiveCommand to be zipped and passed to simple_extract
+    for archive in archives:
+        print(f"Examining archive: {archive}")
+
+        pathname, filename = os.path.split(archive)
+        if pathname and archive not in url_archives:
+            os.chdir(pathname)
+
+        for extension, command in command_map.items():
+            if filename in glob.glob(extension):
+                if archive not in glob_files:
+                    glob_files.append(archive)
+                    commands.append(command)
+
+    print(f"Files to extract: {glob_files}")
 
     os.chdir(working_dir)
 
