@@ -27,8 +27,10 @@ SOFTWARE.
 
 
 import argparse
+import datetime
 import errno
 import glob
+import logging
 import os
 import pathlib
 import shlex
@@ -37,6 +39,14 @@ import sys
 import urllib.error
 import urllib.parse
 import urllib.request
+
+
+# Enable logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="[%(levelname)-8s]  %(message)s",
+    handlers=[logging.FileHandler("simple_extract.log"), logging.StreamHandler()],
+)
 
 
 class ArchiveCommand:
@@ -139,10 +149,10 @@ def simple_extract(archive, archive_cmd, no_clobber=False):
         if suffix in valid_suffixes:
             target = target.removesuffix(suffix)
 
-    print(f"Target: {target}")
+    logging.info(f"Target: {target}")
 
     if os.path.exists(target) and no_clobber:
-        print(f"Target: {target} already exists not overwriting...")
+        logging.warning(f"Target: {target} already exists not overwriting...")
         return
 
     # Extract archive
@@ -152,7 +162,9 @@ def simple_extract(archive, archive_cmd, no_clobber=False):
                 try:
                     subprocess.run(extract_cmd, stdin=infile, check=True)
                 except subprocess.CalledProcessError as e:
-                    print(f"Error: Return Code = {e.returncode} {e.output or ''}")
+                    logging.warning(
+                        f"Error: Return Code = {e.returncode} {e.output or ''}"
+                    )
             elif uses_stdin and uses_stdout:
                 with open(target, "w+") as outfile:
                     try:
@@ -160,13 +172,17 @@ def simple_extract(archive, archive_cmd, no_clobber=False):
                             extract_cmd, stdin=infile, stdout=outfile, check=True
                         )
                     except subprocess.CalledProcessError as e:
-                        print(f"Error: Return Code = {e.returncode} {e.output or ''}")
+                        logging.warning(
+                            f"Error: Return Code = {e.returncode} {e.output or ''}"
+                        )
                         os.remove(target)
             else:
                 try:
                     subprocess.run(extract_cmd, check=True)
                 except subprocess.CalledProcessError as e:
-                    print(f"Error: Return Code = {e.returncode} {e.output or ''}")
+                    logging.warning(
+                        f"Error: Return Code = {e.returncode} {e.output or ''}"
+                    )
         else:
             with subprocess.Popen(
                 extract_cmd, stdin=infile, stdout=subprocess.PIPE
@@ -174,7 +190,9 @@ def simple_extract(archive, archive_cmd, no_clobber=False):
                 try:
                     subprocess.run(pipe_cmd, stdin=cmd.stdout, check=True)
                 except subprocess.CalledProcessError as e:
-                    print(f"Error: Return Code = {e.returncode} {e.output or ''}")
+                    logging.warning(
+                        f"Error: Return Code = {e.returncode} {e.output or ''}"
+                    )
 
 
 def should_fetch_url(archive_url, local_archive):
@@ -186,7 +204,7 @@ def should_fetch_url(archive_url, local_archive):
     @returns: boolean True if archive should downloaded, False otherwise
     """
 
-    print(f"Validating archive url: {archive_url}")
+    logging.info(f"Validating archive url: {archive_url}")
 
     # get content-size of remote archive
     req = urllib.request.Request(archive_url, method="HEAD")
@@ -194,12 +212,12 @@ def should_fetch_url(archive_url, local_archive):
         with urllib.request.urlopen(req) as f:
             remote_size = f.headers["content-length"]
     except urllib.error.HTTPError as e:
-        print("Error: The server couldn't fulfil the request")
-        print(f"Error Code: {e.code}")
+        logging.warning("Error: The server couldn't fulfil the request")
+        logging.warning(f"Error Code: {e.code}")
         return False
     except urllib.error.URLError as e:
-        print("Error: failed to reach the server")
-        print(f"Reason: {e.reason}")
+        logging.warning("Error: failed to reach the server")
+        logging.warning(f"Reason: {e.reason}")
         return False
 
     # archive should be fetched if a local copy does not exist
@@ -209,17 +227,17 @@ def should_fetch_url(archive_url, local_archive):
     # get size of local archive
     local_size = os.path.getsize(local_archive)
 
-    print(f"Comparing remote and local archives")
-    print(f"remote size: {remote_size}, local size: {local_size}")
+    logging.info(f"Comparing remote and local archives")
+    logging.info(f"remote size: {remote_size}, local size: {local_size}")
 
     # compare remote and local sizes, if equal return False
     if int(remote_size) == int(local_size):
-        print(
+        logging.warning(
             f"Remote archive {archive_url} is the same size as local file {local_archive}. Skipping..."
         )
         return False
     else:
-        print(
+        logging.info(
             f"Remote {archive_url} and local {local_archive} archives differ in size, downloading..."
         )
 
@@ -254,20 +272,20 @@ def fetch_archive(url, silent_download=False):
         else:
             fetch_cmd = shlex.split("fetch -o -" + " " + url)
     else:
-        print("Error: no suitable download program found.")
+        logging.error("Error: no suitable download program found.")
         return False
 
     # Check if an archive should be downloaded
     if not should_fetch_url(url, target):
         return target
 
-    print(f"Fetching archive {target}")
+    logging.info(f"Fetching archive {target}")
 
     with open(target, "w+") as outfile:
         try:
             subprocess.run(fetch_cmd, stdin=subprocess.PIPE, stdout=outfile, check=True)
         except subprocess.CalledProcessError as e:
-            print(f"Error: Return Code = {e.returncode} {e.output or ''}")
+            logging.warning(f"Error: Return Code = {e.returncode} {e.output or ''}")
             os.remove(target)
             return False
 
@@ -295,6 +313,9 @@ def main():
 
     @returns: None
     """
+
+    current_time = datetime.datetime.now()
+    logging.info(f"Starting simple-extract @ {current_time}")
 
     parser = argparse.ArgumentParser(
         prog="simple-extract",
@@ -377,15 +398,15 @@ def main():
         archives.append(target)
 
     if not archives:
-        print("Nothing to do.")
-        print("Try passing --help as an argument for more information.")
+        logging.info("Nothing to do.")
+        logging.info("Try passing --help as an argument for more information.")
         sys.exit(0)
 
-    print(f"archives: {archives}")
+    logging.info(f"Archives queued for extraction: {archives}")
 
     # store an archive and an ArchiveCommand to be zipped and passed to simple_extract
     for archive in archives:
-        print(f"Examining archive: {archive}")
+        logging.info(f"Examining archive: {archive}")
 
         pathname, filename = os.path.split(archive)
         if pathname and archive not in url_archives:
@@ -397,7 +418,7 @@ def main():
                     glob_files.append(archive)
                     commands.append(command)
 
-    print(f"Files to extract: {glob_files}")
+    logging.info(f"Archives that can be extracted: {glob_files}")
 
     os.chdir(working_dir)
 
@@ -405,10 +426,15 @@ def main():
     for archive, archive_cmd in zip(glob_files, commands):
         root_cmd = archive_cmd.extract_cmd.split()[0]
         if not command_exists(root_cmd):
-            print(f"Error: {root_cmd} does not exist...not extracting {archive}.")
+            logging.warning(
+                f"Error: {root_cmd} does not exist...not extracting {archive}."
+            )
             continue
-        print(f"Extracting file {archive}")
+        logging.info(f"Extracting archive {archive}")
         simple_extract(archive, archive_cmd, no_clobber=parsed.no_clobber)
+
+    current_time = datetime.datetime.now()
+    logging.info(f"simple-extract finished @ {current_time}")
 
 
 # Program entry point if ran as a normal script, e.g. python simple_extract.py
