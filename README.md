@@ -77,6 +77,8 @@ Michael Berry <trismegustis@gmail.com>
     * Removed glob_multiple_extensions, deprecated
 * 0.2.3
     * Refactored main()
+* 0.2.4
+    * Added logging
 
 ## License
 
