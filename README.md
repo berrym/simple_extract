@@ -79,6 +79,8 @@ Michael Berry <trismegustis@gmail.com>
     * Refactored main()
 * 0.2.4
     * Added logging
+* 0.2.5
+    * New control switch --force_download bypasses should_fetch_url() check
 
 ## License
 
