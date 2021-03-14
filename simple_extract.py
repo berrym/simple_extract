@@ -232,23 +232,20 @@ def should_fetch_url(archive_url, local_archive):
 
     # compare remote and local sizes, if equal return False
     if int(remote_size) == int(local_size):
-        logging.warning(
-            f"Remote archive {archive_url} is the same size as local file {local_archive}. Skipping..."
-        )
+        logging.warning("Archive sizes are the same. Skipping download...")
         return False
     else:
-        logging.info(
-            f"Remote {archive_url} and local {local_archive} archives differ in size, downloading..."
-        )
+        logging.info("Archives differ in size, downloading...")
 
     return True
 
 
-def fetch_archive(url, silent_download=False):
+def fetch_archive(url, silent_download=False, force_download=False):
     """Download an archive for extraction.
 
     @param url: url of archive to be downloaded
     @param silent_download: boolean switch to quiet download output
+    @param force_download: boolean switch to bypass should_fetch_url()
 
     @returns: boolean False if failure, target archive if successful
     """
@@ -276,8 +273,10 @@ def fetch_archive(url, silent_download=False):
         return False
 
     # Check if an archive should be downloaded
-    if not should_fetch_url(url, target):
-        return target
+    if not force_download:
+        logging.info("Checking if archive should be downloaded.")
+        if not should_fetch_url(url, target):
+            return target
 
     logging.info(f"Fetching archive {target}")
 
@@ -325,13 +324,19 @@ def main():
     parser.add_argument(
         "--version",
         action="version",
-        version="%(prog)s 0.2.4",
+        version="%(prog)s 0.2.5",
     )
     parser.add_argument(
         "--no_clobber",
         action="store_true",
         help="Don't overwrite existing files",
         dest="no_clobber",
+    )
+    parser.add_argument(
+        "--force_download",
+        action="store_true",
+        help="Bypass checks and always download remote archive",
+        dest="force_download",
     )
     parser.add_argument(
         "--silent_download",
@@ -392,7 +397,11 @@ def main():
     # append url archives
     url_archives = extract_urls(args)
     for url in url_archives:
-        target = fetch_archive(url, silent_download=parsed.silent_download)
+        target = fetch_archive(
+            url,
+            silent_download=parsed.silent_download,
+            force_download=parsed.force_download,
+        )
         if not target:
             continue
         archives.append(target)
