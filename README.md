@@ -81,7 +81,8 @@ Michael Berry <trismegustis@gmail.com>
     * Added logging
 * 0.2.5
     * New control switch --force_download bypasses should_fetch_url() check
-
+* 0.2.6
+    * Fixed a crash when fetching an url and content length is invalid
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
