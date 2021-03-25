@@ -210,7 +210,13 @@ def should_fetch_url(archive_url, local_archive):
     req = urllib.request.Request(archive_url, method="HEAD")
     try:
         with urllib.request.urlopen(req) as f:
-            remote_size = f.headers["content-length"]
+            if not f.headers["content-length"]:
+                logging.warning(
+                    "Error: invalid archive content-length, skipping download"
+                )
+                return False
+            else:
+                remote_size = f.headers["content-length"]
     except urllib.error.HTTPError as e:
         logging.warning("Error: The server couldn't fulfil the request")
         logging.warning(f"Error Code: {e.code}")
@@ -269,14 +275,14 @@ def fetch_archive(url, silent_download=False, force_download=False):
         else:
             fetch_cmd = shlex.split("fetch -o -" + " " + url)
     else:
-        logging.error("Error: no suitable download program found.")
+        logging.error("Error: no suitable download program found")
         return False
 
     # Check if an archive should be downloaded
     if not force_download:
-        logging.info("Checking if archive should be downloaded.")
+        logging.info("Checking if archive should be downloaded")
         if not should_fetch_url(url, target):
-            return target
+            return False
 
     logging.info(f"Fetching archive {target}")
 
@@ -313,8 +319,8 @@ def main():
     @returns: None
     """
 
-    current_time = datetime.datetime.now()
-    logging.info(f"Starting simple-extract @ {current_time}")
+    start_time = datetime.datetime.now()
+    logging.info(f"Starting simple-extract @ {start_time}")
 
     parser = argparse.ArgumentParser(
         prog="simple-extract",
@@ -324,7 +330,7 @@ def main():
     parser.add_argument(
         "--version",
         action="version",
-        version="%(prog)s 0.2.5",
+        version="%(prog)s 0.2.6",
     )
     parser.add_argument(
         "--no_clobber",
@@ -442,8 +448,10 @@ def main():
         logging.info(f"Extracting archive {archive}")
         simple_extract(archive, archive_cmd, no_clobber=parsed.no_clobber)
 
-    current_time = datetime.datetime.now()
-    logging.info(f"simple-extract finished @ {current_time}")
+    end_time = datetime.datetime.now()
+    logging.info(f"simple-extract finished @ {end_time}")
+    elapsed_time = end_time - start_time
+    logging.info(f"Total time elapsed {elapsed_time}")
 
 
 # Program entry point if ran as a normal script, e.g. python simple_extract.py
