@@ -42,11 +42,7 @@ import urllib.request
 
 
 # Enable logging
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="[%(levelname)-8s]  %(message)s",
-    handlers=[logging.FileHandler("simple_extract.log"), logging.StreamHandler()],
-)
+logging.basicConfig(level=logging.DEBUG, format="[%(levelname)-8s]  %(message)s")
 
 
 class ArchiveCommand:
@@ -62,7 +58,7 @@ class ArchiveCommand:
         @param uses_stdin: boolean value if extract_cmd uses stdin
         @param uses_stdout: boolean value extract_cmd uses stdout
 
-        @returns: None
+        @return: None
         """
 
         self.extract_cmd = extract_cmd
@@ -73,7 +69,7 @@ class ArchiveCommand:
     def __repr__(self):
         """Representation of the object.
 
-        @returns: string representing ArchiveCommand
+        @return: string representing ArchiveCommand
         """
 
         msg = f"[ extract_cmd = {self.extract_cmd!r} "
@@ -88,7 +84,7 @@ def command_exists(cmd):
 
     @param cmd: external command to check for existence
 
-    @returns: boolean value True if cmd exists, False otherwise
+    @return: boolean value True if cmd exists, False otherwise
     """
 
     try:
@@ -107,7 +103,7 @@ def simple_extract(archive, archive_cmd, no_clobber=False):
     @param archive_cmd: a completed ArchiveCommand object
     @param no_clobber: boolean option not to overwrite existing files
 
-    @returns: None
+    @return: None
     """
 
     uses_stdin = archive_cmd.uses_stdin
@@ -201,7 +197,7 @@ def should_fetch_url(archive_url, local_archive):
     @param archive_url: url of archive to be downloaded
     @param local_archive: possible local archive that may already have been downloaded
 
-    @returns: boolean True if archive should downloaded, False otherwise
+    @return: boolean True if archive should be downloaded, False otherwise
     """
 
     logging.info(f"Validating archive url: {archive_url}")
@@ -253,7 +249,7 @@ def fetch_archive(url, silent_download=False, force_download=False):
     @param silent_download: boolean switch to quiet download output
     @param force_download: boolean switch to bypass should_fetch_url()
 
-    @returns: boolean False if failure, target archive if successful
+    @return: boolean False if failure, target archive if successful
     """
 
     _, target = os.path.split(url)
@@ -302,7 +298,7 @@ def extract_urls(args):
 
     @param args: list of possible valid urls to download
 
-    @returns: list of valid urls to download
+    @return: list of valid urls to download
     """
 
     possibles = [urllib.parse.urlsplit(x) for x in args]
@@ -316,7 +312,7 @@ def main():
     """Main function.
     This is where setup.py defines it's entry-point to create the simple-extract installable.
 
-    @returns: None
+    @return: None
     """
 
     start_time = datetime.datetime.now()
