@@ -8,38 +8,46 @@ A small command line file extraction utility written in Python. It uses external
 
 ## Getting started
 
-Python 3.9+ needed
+Python >= *3.9* **needed**
 
 External tools that can be used:
 
-    * tar
-    * gzip
-    * bzip2
-    * unrar
-    * lha
-    * 7z
-    * unzip
-    * rpm2cpio
-    * cpio
-    * ar
-    * xz
-    * zstd
-    * curl
-    * wget
-    * fetch
+- `tar`
+- `gzip`
+- `bzip2`
+- `unrar`
+- `lha`
+- `7z`
+- `unzip`
+- `rpm2cpio`
+- `cpio`
+- `ar`
+- `xz`
+- `zstd`
+- `curl`
+- `wget`
+- `fetch`
 
 ### Installing
+
+## Manual local install
 
     $ clone the git repository from https://github.com/berrym/simple_extract.git
     $ python3 -m venv /path/to/venv
     $ sh /path/to/venv/bin/acivate
     $ python3 -m build
     $ /path/to/venv/bin/pip install .
-    or:
+
+## Package installation **Recommended**
+
     $ python3 -m pip install simple-extract
-    or:
+
+**or**
+
     $ python3 -m pip install --user simple-extract
-    or:
+
+**or**
+
     $ pipx install simple-extract
 
 ### Executing program
