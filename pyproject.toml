@@ -7,7 +7,7 @@ where = ["src"]
 
 [project]
 name = "simple-extract"
-version = "0.2.9"
+version = "0.3.0"
 description = "A small command line utility to help extract compressed archives."
 authors = [
     {name = "Michael Berry", email = "trismegustis@gmail.com"},

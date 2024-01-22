@@ -330,19 +330,19 @@ def main():
         version=f"{__version__}",
     )
     parser.add_argument(
-        "--no_clobber",
+        "--no-clobber",
         action="store_true",
         help="Don't overwrite existing files",
         dest="no_clobber",
     )
     parser.add_argument(
-        "--force_download",
+        "--force-download",
         action="store_true",
         help="Bypass checks and always download remote archive",
         dest="force_download",
     )
     parser.add_argument(
-        "--silent_download",
+        "--silent-download",
         action="store_true",
         help="Don't show archive download progress",
         dest="silent_download",
