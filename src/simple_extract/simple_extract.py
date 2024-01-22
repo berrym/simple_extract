@@ -1,10 +1,12 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
-"""simple-extract.py
+"""simple_extract.py
+
+simple-extract
 
 A small command line utility to download and extract compressed archives.
 
-Copyright (c) 2021 Michael Berry
+Copyright (c) 2024 Michael Berry
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -39,6 +41,8 @@ import sys
 import urllib.error
 import urllib.parse
 import urllib.request
+
+from . import __version__
 
 
 # Enable logging
@@ -315,18 +319,15 @@ def main():
     @return: None
     """
 
-    start_time = datetime.datetime.now()
-    logging.info(f"Starting simple-extract @ {start_time}")
-
     parser = argparse.ArgumentParser(
         prog="simple-extract",
         description="A small command line utility to extract compressed archives.",
-        epilog="Copyright (c) 2021 Michael Berry",
+        epilog="Copyright (c) 2024 Michael Berry",
     )
     parser.add_argument(
         "--version",
         action="version",
-        version="%(prog)s 0.2.7",
+        version=f"{__version__}",
     )
     parser.add_argument(
         "--no_clobber",
@@ -348,6 +349,9 @@ def main():
     )
     parser.add_argument("ARCHIVES", nargs="*")
     parsed = parser.parse_args()
+
+    start_time = datetime.datetime.now()
+    logging.info(f"Starting simple-extract @ {start_time}")
 
     working_dir = os.getcwd()
     args = [x for x in parsed.ARCHIVES]
@@ -449,7 +453,6 @@ def main():
     elapsed_time = end_time - start_time
     logging.info(f"Total time elapsed {elapsed_time}")
 
-
-# Program entry point if ran as a normal script, e.g. python simple_extract.py
+# Script entry point
 if __name__ == "__main__":
     main()

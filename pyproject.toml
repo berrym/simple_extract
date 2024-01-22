@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project]
+name = "simple-extract"
+version = "0.2.8"
+description = "A small command line utility to help extract compressed archives."
+authors = [
+    {name = "Michael Berry", email = "trismegustis@gmail.com"},
+]
+dependencies = []
+requires-python = ">=3.9"
+readme = "README.md"
+license = {text = "MIT"}
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX",
+    "Programming Language :: Python :: 3",
+]
+
+[project.urls]
+Homepage = "https://github.com/berrym/simple_extract"
+
+[project.scripts]
+simple-extract = "simple_extract.simple_extract:main"
