@@ -31,15 +31,23 @@ External tools that can be used:
 ### Installing
 
     $ clone the git repository from https://github.com/berrym/simple_extract.git
+    $ python3 -m venv /path/to/venv
+    $ sh /path/to/venv/bin/acivate
+    $ python3 -m build
+    $ /path/to/venv/bin/pip install .
     or:
     $ python3 -m pip install simple-extract
     or:
     $ python3 -m pip install --user simple-extract
+    or:
+    $ pipx install simple-extract
 
 ### Executing program
 
+    $ /path/to/venv/bin/simple-extract  # if cloned and manually built
+    or:
     $ python3 simple_extract.py some-archive.tar.gz some-other-archive.lzma
-    or if installed via pip:
+    or if installed via pip or pipx:
     $ simple-extract https://github.com/ibara/mg/releases/download/mg-6.8.1/mg-6.8.1.tar.gz
 
 ## Authors
