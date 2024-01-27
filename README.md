@@ -69,3 +69,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![build result](https://build.opensuse.org/projects/home:berrym/packages/simple-extract/badge.svg?type=default)](https://build.opensuse.org/package/show/home:berrym/simple-extract)
+[![Copr build status](https://copr.fedorainfracloud.org/coprs/mberry/simple-extract/package/simple-extract/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/mberry/simple-extract/package/simple-extract/)
