@@ -36,7 +36,7 @@ External tools that can be used:
     $ python3 -m venv /path/to/venv
     $ sh /path/to/venv/bin/acivate
     $ python3 -m build
-    $ /path/to/venv/bin/pip install .
+    $ /path/to/venv/bin/pip3 install .
 
 ## Package installation **Recommended**
 
