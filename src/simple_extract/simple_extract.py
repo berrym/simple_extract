@@ -46,9 +46,7 @@ from . import __version__
 
 
 # Enable logging
-logging.basicConfig(
-    level=logging.DEBUG, format="[%(levelname)-8s]  %(message)s"
-)
+logging.basicConfig(level=logging.DEBUG, format="[%(levelname)-8s]  %(message)s")
 
 
 class ArchiveCommand:
@@ -94,9 +92,10 @@ def command_exists(cmd):
     """
 
     try:
-        subprocess.Popen(
+        with subprocess.Popen(
             [cmd], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-        )
+        ) as cmd:
+            pass
     except OSError as e:
         if e.errno == errno.ENOENT:
             return False
@@ -160,7 +159,7 @@ def simple_extract(archive, archive_cmd, no_clobber=False):
         return
 
     # Extract archive
-    with open(archive) as infile:
+    with open(archive, encoding="utf8") as infile:
         if not pipe_cmd:
             if uses_stdin and not uses_stdout:
                 try:
@@ -169,8 +168,10 @@ def simple_extract(archive, archive_cmd, no_clobber=False):
                     logging.warning(
                         "Errno %d: %s - %s", e.errno, e.strerror, extract_cmd
                     )
-            elif uses_stdin and uses_stdout:
-                with open(target, "w+") as outfile:
+                return
+
+            if uses_stdin and uses_stdout:
+                with open(target, "w+", encoding="utf8") as outfile:
                     try:
                         subprocess.run(
                             extract_cmd,
@@ -183,6 +184,7 @@ def simple_extract(archive, archive_cmd, no_clobber=False):
                             "Errno %d: %s - %s", e.errno, e.strerror, extract_cmd
                         )
                         os.remove(target)
+                    return
             else:
                 try:
                     subprocess.run(extract_cmd, check=True)
@@ -190,16 +192,14 @@ def simple_extract(archive, archive_cmd, no_clobber=False):
                     logging.warning(
                         "Errno %d: %s - %s", e.errno, e.strerror, extract_cmd
                     )
-        else:
-            with subprocess.Popen(
-                extract_cmd, stdin=infile, stdout=subprocess.PIPE
-            ) as cmd:
-                try:
-                    subprocess.run(pipe_cmd, stdin=cmd.stdout, check=True)
-                except OSError as e:
-                    logging.warning(
-                        "Errno %d: %s - %s", e.errno, e.strerror, extract_cmd
-                    )
+                return
+
+        # Piped command
+        with subprocess.Popen(extract_cmd, stdin=infile, stdout=subprocess.PIPE) as cmd:
+            try:
+                subprocess.run(pipe_cmd, stdin=cmd.stdout, check=True)
+            except OSError as e:
+                logging.warning("Errno %d: %s -> %s", e.errno, e.strerror, extract_cmd)
 
 
 def should_fetch_url(archive_url, local_archive):
@@ -223,8 +223,8 @@ def should_fetch_url(archive_url, local_archive):
                     "Error: invalid archive content-length, skipping download"
                 )
                 return False
-            else:
-                remote_size = f.headers["content-length"]
+
+            remote_size = f.headers["content-length"]
     except urllib.error.HTTPError as e:
         logging.warning("Error: The server couldn't fulfil the request")
         logging.warning("Error Code: %d", e.code)
@@ -248,8 +248,8 @@ def should_fetch_url(archive_url, local_archive):
     if int(remote_size) == int(local_size):
         logging.warning("Archive sizes are the same. Skipping download...")
         return False
-    else:
-        logging.info("Archives differ in size, downloading...")
+
+    logging.info("Archives differ in size, downloading...")
 
     return True
 
@@ -294,15 +294,11 @@ def fetch_archive(url, silent_download=False, force_download=False):
 
     logging.info("Fetching archive %s", target)
 
-    with open(target, "w+") as outfile:
+    with open(target, "w+", encoding="utf8") as outfile:
         try:
-            subprocess.run(
-                fetch_cmd, stdin=subprocess.PIPE, stdout=outfile, check=True
-            )
+            subprocess.run(fetch_cmd, stdin=subprocess.PIPE, stdout=outfile, check=True)
         except OSError as e:
-            logging.warning(
-                "Errno %d: %s - %s", e.errno, e.strerror, fetch_cmd
-            )
+            logging.warning("Errno %d: %s - %s", e.errno, e.strerror, fetch_cmd)
             os.remove(target)
             return False
 
@@ -318,9 +314,7 @@ def extract_urls(args):
     """
 
     possibles = [urllib.parse.urlsplit(x) for x in args]
-    unfiltered = [
-        x if x.scheme and x.netloc and x.path else None for x in possibles
-    ]
+    unfiltered = [x if x.scheme and x.netloc and x.path else None for x in possibles]
     processed_urls = list(filter(lambda x: x is not None, unfiltered))
 
     return [x.scheme + "://" + x.netloc + x.path for x in processed_urls]
@@ -366,37 +360,29 @@ def main():
     parsed = parser.parse_args()
 
     start_time = datetime.datetime.now()
-    logging.info("Starting simple-extract @ %s, start_time")
+    logging.info("Starting simple-extract @ %s", start_time)
 
     working_dir = os.getcwd()
-    args = [x for x in parsed.ARCHIVES]
+    args = list(parsed.ARCHIVES)
     glob_files = []
     commands = []
     command_map = {
-        "*.tar.bz2": ArchiveCommand(
-            extract_cmd="tar -xvjf -", uses_stdin=True
-        ),
+        "*.tar.bz2": ArchiveCommand(extract_cmd="tar -xvjf -", uses_stdin=True),
         "*.tbz2": ArchiveCommand(extract_cmd="tar -xvjf -", uses_stdin=True),
         "*.tbz": ArchiveCommand(extract_cmd="tar -xvjf -", uses_stdin=True),
         "*.tar.gz": ArchiveCommand(extract_cmd="tar -xvzf -", uses_stdin=True),
         "*.tgz": ArchiveCommand(extract_cmd="tar -xvzf -", uses_stdin=True),
         "*.tar.xz": ArchiveCommand(extract_cmd="tar -xvJf -", uses_stdin=True),
         "*.txz": ArchiveCommand(extract_cmd="tar -xvJf -", uses_stdin=True),
-        "*.tar.lzma": ArchiveCommand(
-            extract_cmd="tar -xvJf -", uses_stdin=True
-        ),
-        "*.tar.zst": ArchiveCommand(
-            extract_cmd="tar --zstd -xvf -", uses_stdin=True
-        ),
+        "*.tar.lzma": ArchiveCommand(extract_cmd="tar -xvJf -", uses_stdin=True),
+        "*.tar.zst": ArchiveCommand(extract_cmd="tar --zstd -xvf -", uses_stdin=True),
         "*.tar": ArchiveCommand(extract_cmd="tar -xvf -", uses_stdin=True),
         "*.rar": ArchiveCommand(extract_cmd="unrar x"),
         "*.lzh": ArchiveCommand(extract_cmd="lha x"),
         "*.7z": ArchiveCommand(extract_cmd="7z x"),
         "*.zip": ArchiveCommand(extract_cmd="unzip"),
         "*.jar": ArchiveCommand(extract_cmd="unzip"),
-        "*.rpm": ArchiveCommand(
-            extract_cmd="rpm2cpio -", pipe_cmd="cpio -idvm"
-        ),
+        "*.rpm": ArchiveCommand(extract_cmd="rpm2cpio -", pipe_cmd="cpio -idvm"),
         "*.deb": ArchiveCommand(extract_cmd="ar -x"),
         "*.bz2": ArchiveCommand(
             extract_cmd="bzip2 -d -c -", uses_stdin=True, uses_stdout=True
@@ -466,7 +452,7 @@ def main():
         root_cmd = archive_cmd.extract_cmd.split()[0]
         if not command_exists(root_cmd):
             logging.warning(
-                "Error: %s does not exist...not extracting %s.",root_cmd, archive
+                "Error: %s does not exist...not extracting %s.", root_cmd, archive
             )
             continue
         logging.info("Extracting archive %s", archive)
