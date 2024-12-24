@@ -42,6 +42,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+from typing import override
+
 from . import __version__
 
 
@@ -53,8 +55,12 @@ class ArchiveCommand:
     """Object for storing information needed to extract archives."""
 
     def __init__(
-        self, extract_cmd="", pipe_cmd="", uses_stdin=False, uses_stdout=False
-    ):
+        self,
+        extract_cmd: str = "",
+        pipe_cmd: str = "",
+        uses_stdin: bool = False,
+        uses_stdout: bool = False,
+    ) -> None:
         """Set attributes for decompression and piping.
 
         @param extract_cmd: command string to decompress archive
@@ -65,12 +71,13 @@ class ArchiveCommand:
         @return: None
         """
 
-        self.extract_cmd = extract_cmd
-        self.pipe_cmd = pipe_cmd
-        self.uses_stdin = uses_stdin
-        self.uses_stdout = uses_stdout
+        self.extract_cmd: str = extract_cmd
+        self.pipe_cmd: str = pipe_cmd
+        self.uses_stdin: bool = uses_stdin
+        self.uses_stdout: bool = uses_stdout
 
-    def __repr__(self):
+    @override
+    def __repr__(self) -> str:
         """Representation of the object.
 
         @return: string representing ArchiveCommand
@@ -82,19 +89,32 @@ class ArchiveCommand:
         msg += f"uses_stdout = {self.uses_stdout!r} ] "
         return msg
 
+    @override
+    def __str__(self) -> str:
+        """String representation of the object.
 
-def command_exists(cmd):
+        @return: string representing ArchiveCommand
+        """
+
+        msg = f"[ extract_cmd = {self.extract_cmd} "
+        msg += f"pipe_cmd = {self.pipe_cmd} "
+        msg += f"uses_stdin = {self.uses_stdin} "
+        msg += f"uses_stdout = {self.uses_stdout} ] "
+        return msg
+
+
+def command_exists(path: str) -> bool:
     """Test for an external command's existence.
 
-    @param cmd: external command to check for existence
+    @param path: external command path to check for existence
 
     @return: boolean value True if cmd exists, False otherwise
     """
 
     try:
         with subprocess.Popen(
-            [cmd], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-        ) as cmd:
+            [path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        ) as _:
             pass
     except OSError as e:
         if e.errno == errno.ENOENT:
@@ -103,25 +123,13 @@ def command_exists(cmd):
     return True
 
 
-def simple_extract(archive, archive_cmd, no_clobber=False):
-    """Extract an archive using external tools.
+def strip_suffix(archive: str) -> str:
+    """Remove extensions from extraction target.
 
-    @param archive: the archive to be extracted
-    @param archive_cmd: a completed ArchiveCommand object
-    @param no_clobber: boolean option not to overwrite existing files
+    @param archive: complete archive path with extension suffixes.
 
-    @return: None
+    @return: complete archive path with extension suffixes removed.
     """
-
-    uses_stdin = archive_cmd.uses_stdin
-    uses_stdout = archive_cmd.uses_stdout
-
-    if uses_stdin or uses_stdout:
-        extract_cmd = shlex.split(archive_cmd.extract_cmd)
-    else:
-        extract_cmd = shlex.split(archive_cmd.extract_cmd + " " + archive)
-
-    pipe_cmd = shlex.split(archive_cmd.pipe_cmd)
 
     # Valid extension suffixes
     valid_suffixes = (
@@ -145,12 +153,38 @@ def simple_extract(archive, archive_cmd, no_clobber=False):
         ".zst",
     )
 
-    # Remove extensions from extraction target
     target_path = pathlib.PurePath(archive)
     target = target_path.stem
     for suffix in target_path.suffixes:
         if suffix in valid_suffixes:
             target = target.removesuffix(suffix)
+
+    return target
+
+
+def simple_extract(
+    archive: str, archive_cmd: ArchiveCommand, no_clobber: bool = False
+) -> None:
+    """Extract an archive using external tools.
+
+    @param archive: the archive to be extracted
+    @param archive_cmd: a completed ArchiveCommand object
+    @param no_clobber: boolean option not to overwrite existing files
+
+    @return: None
+    """
+
+    uses_stdin = archive_cmd.uses_stdin
+    uses_stdout = archive_cmd.uses_stdout
+
+    if uses_stdin or uses_stdout:
+        extract_cmd = shlex.split(archive_cmd.extract_cmd)
+    else:
+        extract_cmd = shlex.split(archive_cmd.extract_cmd + " " + archive)
+
+    pipe_cmd = shlex.split(archive_cmd.pipe_cmd)
+
+    target = strip_suffix(archive)
 
     logging.info("Target: %s", target)
 
@@ -163,7 +197,7 @@ def simple_extract(archive, archive_cmd, no_clobber=False):
         if not pipe_cmd:
             if uses_stdin and not uses_stdout:
                 try:
-                    subprocess.run(extract_cmd, stdin=infile, check=True)
+                    _ = subprocess.run(extract_cmd, stdin=infile, check=True)
                 except OSError as e:
                     logging.warning(
                         "Errno %d: %s - %s", e.errno, e.strerror, extract_cmd
@@ -173,7 +207,7 @@ def simple_extract(archive, archive_cmd, no_clobber=False):
             if uses_stdin and uses_stdout:
                 with open(target, "w+", encoding="utf8") as outfile:
                     try:
-                        subprocess.run(
+                        _ = subprocess.run(
                             extract_cmd,
                             stdin=infile,
                             stdout=outfile,
@@ -187,7 +221,7 @@ def simple_extract(archive, archive_cmd, no_clobber=False):
                     return
             else:
                 try:
-                    subprocess.run(extract_cmd, check=True)
+                    _ = subprocess.run(extract_cmd, check=True)
                 except OSError as e:
                     logging.warning(
                         "Errno %d: %s - %s", e.errno, e.strerror, extract_cmd
@@ -197,12 +231,12 @@ def simple_extract(archive, archive_cmd, no_clobber=False):
         # Piped command
         with subprocess.Popen(extract_cmd, stdin=infile, stdout=subprocess.PIPE) as cmd:
             try:
-                subprocess.run(pipe_cmd, stdin=cmd.stdout, check=True)
+                _ = subprocess.run(pipe_cmd, stdin=cmd.stdout, check=True)
             except OSError as e:
                 logging.warning("Errno %d: %s -> %s", e.errno, e.strerror, extract_cmd)
 
 
-def should_fetch_url(archive_url, local_archive):
+def should_fetch_url(archive_url: str, local_archive: str) -> bool:
     """Check if an archive should be fetched by comparing
     remote and local file sizes.
 
@@ -217,6 +251,7 @@ def should_fetch_url(archive_url, local_archive):
     # get content-size of remote archive
     req = urllib.request.Request(archive_url, method="HEAD")
     try:
+        f: urllib.request.Request
         with urllib.request.urlopen(req) as f:
             if not f.headers["content-length"]:
                 logging.warning(
@@ -224,9 +259,9 @@ def should_fetch_url(archive_url, local_archive):
                 )
                 return False
 
-            remote_size = f.headers["content-length"]
+            remote_size: str = f.headers["content-length"]
     except urllib.error.HTTPError as e:
-        logging.warning("Error: The server couldn't fulfil the request")
+        logging.warning("Error: The server couldn't fulfill the request")
         logging.warning("Error Code: %d", e.code)
         return False
     except urllib.error.URLError as e:
@@ -254,17 +289,14 @@ def should_fetch_url(archive_url, local_archive):
     return True
 
 
-def fetch_archive(url, silent_download=False, force_download=False):
-    """Download an archive for extraction.
+def make_download_command(url: str, silent_download: bool = False) -> list[str] | None:
+    """Make a valid command line string to download a url.
 
     @param url: url of archive to be downloaded
-    @param silent_download: boolean switch to quiet download output
-    @param force_download: boolean switch to bypass should_fetch_url()
+    @param silent_download: boolean switch to suppress download output
 
-    @return: boolean False if failure, target archive if successful
+    @return: command string or None
     """
-
-    _, target = os.path.split(url)
 
     # determine which download tool to use
     if command_exists("curl"):
@@ -284,28 +316,52 @@ def fetch_archive(url, silent_download=False, force_download=False):
             fetch_cmd = shlex.split("fetch -o -" + " " + url)
     else:
         logging.error("Error: no suitable download program found")
-        return False
+        return None
+
+    return fetch_cmd
+
+
+def fetch_archive(
+    url: str, silent_download: bool = False, force_download: bool = False
+) -> str | None:
+    """Download an archive for extraction.
+
+    @param url: url of archive to be downloaded
+    @param silent_download: boolean switch to quiet download output
+    @param force_download: boolean switch to bypass should_fetch_url()
+
+    @return: None if failure, target archive if successful
+    """
+
+    _, target = os.path.split(url)
+
+    fetch_cmd = make_download_command(url, silent_download=silent_download)
+
+    if fetch_cmd is None:
+        return None
 
     # Check if an archive should be downloaded
     if not force_download:
         logging.info("Checking if archive should be downloaded")
         if not should_fetch_url(url, target):
-            return False
+            return None
 
     logging.info("Fetching archive %s", target)
 
     with open(target, "w+", encoding="utf8") as outfile:
         try:
-            subprocess.run(fetch_cmd, stdin=subprocess.PIPE, stdout=outfile, check=True)
+            _ = subprocess.run(
+                fetch_cmd, stdin=subprocess.PIPE, stdout=outfile, check=True
+            )
         except OSError as e:
             logging.warning("Errno %d: %s - %s", e.errno, e.strerror, fetch_cmd)
             os.remove(target)
-            return False
+            return None
 
     return target
 
 
-def extract_urls(args):
+def extract_urls(args: list[str]) -> list[str]:
     """Extract urls from a sequence.
 
     @param args: list of possible valid urls to download
@@ -317,55 +373,63 @@ def extract_urls(args):
     unfiltered = [x if x.scheme and x.netloc and x.path else None for x in possibles]
     processed_urls = list(filter(lambda x: x is not None, unfiltered))
 
-    return [x.scheme + "://" + x.netloc + x.path for x in processed_urls]
+    return [
+        x.scheme + "://" + x.netloc + x.path for x in processed_urls if x is not None
+    ]
 
 
-def main():
-    """Main function.
-    This is where project metadata defines an entry-point to
-    create the simple-extract executable.
+def process_archives(
+    paths: list[str], force_download: bool = False, silent_download: bool = False
+) -> tuple[list[str], list[str]]:
+    """Create lists of archives.
 
-    @return: None
+    @param paths: a list of paths to archives
+    @param force_download: a boolean switch to force downloading an archive
+    @param silent_download: a boolean switch to suppress output when downloading
+
+    @return: a list of archives and url archives
     """
 
-    parser = argparse.ArgumentParser(
-        prog="simple-extract",
-        description="A small command line utility to extract compressed archives.",
-        epilog="Copyright (c) 2024 Michael Berry",
-    )
-    parser.add_argument(
-        "--version",
-        action="version",
-        version=f"{__version__}",
-    )
-    parser.add_argument(
-        "--no-clobber",
-        action="store_true",
-        help="Don't overwrite existing files",
-        dest="no_clobber",
-    )
-    parser.add_argument(
-        "--force-download",
-        action="store_true",
-        help="Bypass checks and always download remote archive",
-        dest="force_download",
-    )
-    parser.add_argument(
-        "--silent-download",
-        action="store_true",
-        help="Don't show archive download progress",
-        dest="silent_download",
-    )
-    parser.add_argument("ARCHIVES", nargs="*")
-    parsed = parser.parse_args()
+    # sanitize inputs, silently drop bad paths
+    possibles: list[str] = [os.path.realpath(x) for x in paths]
+    unfiltered = [x if os.path.exists(x) else None for x in possibles]
+    filtered = list(filter(lambda x: x is not None, unfiltered))
+    archives: list[str] = [x for x in filtered if x is not None]
 
-    start_time = datetime.datetime.now()
-    logging.info("Starting simple-extract @ %s", start_time)
+    # append url archives
+    url_archives = extract_urls(paths)
+    for url in url_archives:
+        target = fetch_archive(
+            url,
+            silent_download=silent_download,
+            force_download=force_download,
+        )
+        if not target:
+            continue
+        archives.append(target)
+
+    if not archives:
+        logging.info("Nothing to do.")
+        logging.info("Try passing --help as an argument for more information.")
+        sys.exit(0)
+
+    return archives, url_archives
+
+
+def process_commands(
+    archives: list[str], url_archives: list[str]
+) -> tuple[list[str], list[ArchiveCommand]]:
+    """Create ArchiveCommands.
+
+    @param archives: a list of local archives
+    @param url_archives: a list of potential archives to download
+
+    @return: a tuple of a list of archive files and a list of ArchiveCommands
+    """
 
     working_dir = os.getcwd()
-    args = list(parsed.ARCHIVES)
-    glob_files = []
-    commands = []
+    glob_files: list[str] = []
+    commands: list[ArchiveCommand] = []
     command_map = {
         "*.tar.bz2": ArchiveCommand(extract_cmd="tar -xvjf -", uses_stdin=True),
         "*.tbz2": ArchiveCommand(extract_cmd="tar -xvjf -", uses_stdin=True),
@@ -404,30 +468,6 @@ def main():
         ),
     }
 
-    # sanitize inputs, silently drop bad paths
-    possibles = [os.path.realpath(x) for x in args]
-    unfiltered = [x if os.path.exists(x) else None for x in possibles]
-    archives = list(filter(lambda x: x is not None, unfiltered))
-
-    # append url archives
-    url_archives = extract_urls(args)
-    for url in url_archives:
-        target = fetch_archive(
-            url,
-            silent_download=parsed.silent_download,
-            force_download=parsed.force_download,
-        )
-        if not target:
-            continue
-        archives.append(target)
-
-    if not archives:
-        logging.info("Nothing to do.")
-        logging.info("Try passing --help as an argument for more information.")
-        sys.exit(0)
-
-    logging.info("Archives queued for extraction: %r", archives)
-
     # store an archive and an ArchiveCommand to be zipped
     # then passed to simple_extract
     for archive in archives:
@@ -447,6 +487,20 @@ def main():
 
     os.chdir(working_dir)
 
+    return glob_files, commands
+
+
+def do_simple_extract(
+    glob_files: list[str], commands: list[ArchiveCommand], no_clobber: bool = False
+) -> None:
+    """Run simple_extract on corresponding lists of archives and commands.
+
+    @glob_files: list of archives
+    @commands: list of ArchiveCommand
+
+    @return: None
+    """
+
     # pass archives and their ArchiveCommand's to simple_extract
     for archive, archive_cmd in zip(glob_files, commands):
         root_cmd = archive_cmd.extract_cmd.split()[0]
@@ -456,13 +510,69 @@ def main():
             )
             continue
         logging.info("Extracting archive %s", archive)
-        simple_extract(archive, archive_cmd, no_clobber=parsed.no_clobber)
+        simple_extract(archive, archive_cmd, no_clobber=no_clobber)
+
+
+def main() -> None:
+    """Main function.
+    This is where project metadata defines an entry-point to
+    create the simple-extract executable.
+
+    @return: None
+    """
+
+    parser = argparse.ArgumentParser(
+        prog="simple-extract",
+        description="A small command line utility to extract compressed archives.",
+        epilog="Copyright (c) 2024 Michael Berry",
+    )
+    _ = parser.add_argument(
+        "--version",
+        action="version",
+        version=f"{__version__}",
+    )
+    _ = parser.add_argument(
+        "--no-clobber",
+        action="store_true",
+        help="Don't overwrite existing files",
+        dest="no_clobber",
+    )
+    _ = parser.add_argument(
+        "--force-download",
+        action="store_true",
+        default=False,
+        help="Bypass checks and always download remote archive",
+        dest="force_download",
+    )
+    _ = parser.add_argument(
+        "--silent-download",
+        action="store_true",
+        default=False,
+        help="Don't show archive download progress",
+        dest="silent_download",
+    )
+    _ = parser.add_argument("ARCHIVES", nargs="*")
+    opts = vars(parser.parse_args())
+
+    start_time = datetime.datetime.now()
+    logging.info("Starting simple-extract @ %s", start_time)
+
+    paths: list[str] = opts["ARCHIVES"]
+    force_download: bool = opts["force_download"]
+    silent_download: bool = opts["silent_download"]
+    no_clobber: bool = opts["no_clobber"]
+
+    archives, url_archives = process_archives(
+        paths, force_download=force_download, silent_download=silent_download
+    )
+
+    logging.info("Archives queued for extraction: %r", archives)
+
+    glob_files, commands = process_commands(archives, url_archives)
+
+    do_simple_extract(glob_files, commands, no_clobber=no_clobber)
 
     end_time = datetime.datetime.now()
     logging.info("simple-extract finished @ %s", end_time)
     elapsed_time = end_time - start_time
     logging.info("Total time elapsed %s", elapsed_time)
-
-
-if __name__ == "__main__":
-    main()
