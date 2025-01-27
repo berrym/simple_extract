@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-
-"""simple_extract.py
+"""__main__.py
 
 simple-extract
 
@@ -26,7 +24,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-
 
 import argparse
 import datetime
@@ -277,7 +274,7 @@ def should_fetch_url(archive_url: str, local_archive: str) -> bool:
     local_size = os.path.getsize(local_archive)
 
     logging.info("Comparing remote and local archives")
-    logging.info("remote size: %d, local size: %d", remote_size, local_size)
+    logging.info("remote size: %r, local size: %r", remote_size, local_size)
 
     # compare remote and local sizes, if equal return False
     if int(remote_size) == int(local_size):
@@ -524,7 +521,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         prog="simple-extract",
         description="A small command line utility to extract compressed archives.",
-        epilog="Copyright (c) 2024 Michael Berry",
+        epilog="Copyright (c) 2025 Michael Berry",
     )
     _ = parser.add_argument(
         "--version",

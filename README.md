@@ -1,14 +1,14 @@
-# simple_extract
+# simple-extract
 
 Simple File Extraction
 
 ## Description
 
-A small command line file extraction utility written in Python. It uses external tools to optionally fetch from an url and decompress archives.
+A small command line file extraction utility written in Python. It uses external tools to optionally fetch from an url and decompress many types of archives.
 
 ## Getting started
 
-Python >= *3.9* **needed**
+Python >= *3.12* **needed**
 
 External tools that can be used:
 
@@ -33,34 +33,44 @@ External tools that can be used:
 ## Manual local install
 
     $ clone the git repository from https://github.com/berrym/simple_extract.git
-    $ python3 -m venv /path/to/venv
-    $ sh /path/to/venv/bin/acivate
+    $ python3 -m venv .venv
+    $ source .venv/bin/acivate
     $ python3 -m build
-    $ /path/to/venv/bin/pip3 install .
+    $ pip3 install .
 
 ## Package installation **Recommended**
 
-    $ python3 -m pip install simple-extract
+    $ python3 -m pip install simple-extract         # if you have permissions
 
 **or**
 
-    $ python3 -m pip install --user simple-extract
+    $ python3 -m pip install --user simple-extract  # will store in user's local directories
 
-**or**
+**or** **Recommended** install method
 
-    $ pipx install simple-extract
+    $ pipx install simple-extract  # will install to a venv and install an executable link
 
 ### Executing program
 
-    $ /path/to/venv/bin/simple-extract  # if cloned and manually built
-    or:
-    $ python3 simple_extract.py some-archive.tar.gz some-other-archive.lzma
-    or if installed via pip or pipx:
+    $ /path/to/venv/bin/simple-extract  # if cloned and manually built but no longer in the venv.
+
+**or** if installed via pip, pipx
+
     $ simple-extract https://github.com/ibara/mg/releases/download/mg-6.8.1/mg-6.8.1.tar.gz
+
+### Tip
+
+If you have a shell environment that supports aliases, it's useful to alias simple-extract.
+
+On common unix/linux shells you might run or put this in your shell rc script.
+
+    $ alias se='simple-extract'
+
+Then you can execute the program by typing `se`
 
 ## Authors
 
-Copyright 2024 Michael Berry <trismegustis@gmail.com>
+Copyright 2025 Michael Berry <trismegustis@gmail.com>
 
 ## License
 

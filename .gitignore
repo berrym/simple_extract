@@ -3,4 +3,6 @@ build/
 dist/
 tests/
 venv/
+.venv/
 simple_extract.egg-info/
+*.lock

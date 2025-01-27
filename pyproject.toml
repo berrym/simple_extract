@@ -7,13 +7,13 @@ where = ["src"]
 
 [project]
 name = "simple-extract"
-version = "0.3.3"
+version = "0.3.4"
 description = "A small command line utility to help extract compressed archives."
 authors = [
     {name = "Michael Berry", email = "trismegustis@gmail.com"},
 ]
 dependencies = []
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 readme = "README.md"
 license = {text = "MIT"}
 classifiers = [
@@ -26,4 +26,4 @@ classifiers = [
 Homepage = "https://github.com/berrym/simple_extract"
 
 [project.scripts]
-simple-extract = "simple_extract.simple_extract:main"
+simple-extract = "simple_extract.__main__:main"
